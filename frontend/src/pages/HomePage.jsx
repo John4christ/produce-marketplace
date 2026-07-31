@@ -8,7 +8,7 @@ import { TestimonialsSection } from '../components/landing/TestimonialsSection';
 import { StatisticsSection } from '../components/landing/StatisticsSection';
 import { NewsletterSection } from '../components/landing/NewsletterSection';
 import { JoinCommunityCTA } from '../components/landing/JoinCommunityCTA';
-import { MOCK_PRODUCE } from '../services/mockData';
+import api from '../services/api';
 import { useScrollAnimation } from '../hooks/useScrollAnimation';
 import { toast } from 'react-toastify';
 
@@ -20,23 +20,22 @@ export const HomePage = () => {
 
   // Trigger scroll reveal animations
   useScrollAnimation();
+const fetchProduce = async () => {
+  setIsLoading(true);
+  setError(null);
 
-  const fetchProduce = () => {
-    setIsLoading(true);
-    setError(null);
+  try {
+    const response = await api.get('/products');
 
-    // Simulate API fetch delay
-    setTimeout(() => {
-      try {
-        setProducts(MOCK_PRODUCE);
-        setIsLoading(false);
-      } catch (err) {
-        setError('Failed to fetch harvest data. Please refresh.');
-        setIsLoading(false);
-        toast.error('Could not load produce items.');
-      }
-    }, 800);
-  };
+    setProducts(response.data.data);
+
+    setIsLoading(false);
+  } catch (err) {
+    setError('Failed to fetch harvest data. Please refresh.');
+    setIsLoading(false);
+    toast.error('Could not load produce items.');
+  }
+};
 
   useEffect(() => {
     fetchProduce();
