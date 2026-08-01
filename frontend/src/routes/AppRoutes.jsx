@@ -11,12 +11,15 @@ import { ProductDetailsPage } from '../pages/ProductDetailsPage';
 import { CartPage } from '../pages/CartPage';
 import { CheckoutPage } from '../pages/CheckoutPage';
 import { useAuth } from '../context/AuthContext';
+import ProtectedRoute from "../components/ProtectedRoute";
 
 const AdminRoute = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
-  if (!isAuthenticated || user?.role !== 'admin') {
+
+  if (!isAuthenticated || !user?.roles?.includes("admin")) {
     return <Navigate to="/login" replace />;
   }
+
   return children;
 };
 
@@ -48,13 +51,21 @@ export const AppRoutes = () => {
         }
       />
       <Route
-        path="/dashboard"
-        element={<BuyerDashboardPage />}
-      />
+  path="/dashboard"
+  element={
+    <ProtectedRoute>
+      <BuyerDashboardPage />
+    </ProtectedRoute>
+  }
+/>
       <Route
-        path="/farmer-dashboard"
-        element={<FarmerDashboardPage />}
-      />
+  path="/farmer-dashboard"
+  element={
+    <ProtectedRoute>
+      <FarmerDashboardPage />
+    </ProtectedRoute>
+  }
+/>
       <Route
         path="/admin-dashboard"
         element={

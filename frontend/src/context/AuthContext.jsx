@@ -1,29 +1,36 @@
-import React, { createContext, useContext, useState } from 'react';
 
+import React, { createContext, useContext, useState, useEffect } from "react";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState({
-    id: 'user-101',
-    name: 'Alex Rivera',
-    email: 'alex.rivera@example.com',
-    role: 'buyer', // 'buyer', 'farmer', 'admin'
-    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80'
-  });
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [user, setUser] = useState(null);
 
-  const login = (userData, token) => {
-    setUser(userData);
+const [isAuthenticated, setIsAuthenticated] = useState(
+  !!sessionStorage.getItem("agri_auth_token")
+);
+useEffect(() => {
+  const storedUser = sessionStorage.getItem("agri_user");
+
+  if (storedUser) {
+    setUser(JSON.parse(storedUser));
     setIsAuthenticated(true);
-    if (token) sessionStorage.setItem('agri_auth_token', token);
-  };
+  }
+}, []);
+   const login = (userData, token) => {
+  setUser(userData);
+  setIsAuthenticated(true);
+
+  sessionStorage.setItem("agri_auth_token", token);
+  sessionStorage.setItem("agri_user", JSON.stringify(userData));
+};
 
   const logout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
-    sessionStorage.removeItem('agri_auth_token');
-  };
+  setUser(null);
+  setIsAuthenticated(false);
 
+  sessionStorage.removeItem("agri_auth_token");
+  sessionStorage.removeItem("agri_user");
+};
   return (
     <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
       {children}
