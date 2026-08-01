@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import { isValidEmail } from '../utils/validators';
 import { sanitizeInput } from '../utils/sanitize';
-
+import axios from "axios";
 export const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -57,52 +57,49 @@ export const LoginPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const getMockRoleFromEmail = (email) => {
-    const normalized = email.toLowerCase();
-    if (normalized.includes('admin') || normalized.includes('administrator')) {
-      return 'admin';
-    }
-    if (normalized.includes('farmer') || normalized.includes('grower') || normalized.includes('farm')) {
-      return 'farmer';
-    }
-    return 'buyer';
-  };
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-  const getDashboardRoute = (role) => {
-    return role === 'farmer' ? '/farmer-dashboard' : '/dashboard';
-  };
+  if (!validateForm()) {
+    toast.error("Please fix the errors.");
+    return;
+  }
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!validateForm()) {
-      toast.error('Please fix the form errors before logging in.');
-      return;
-    }
+  setIsLoading(true);
 
-    setIsLoading(true);
-
-    // Simulate API Auth Request
-    setTimeout(() => {
-      setIsLoading(false);
-      // Mock credentials check
-      if (formData.email.toLowerCase() === 'alex.rivera@example.com' || formData.email.includes('@')) {
-        const mockRole = getMockRoleFromEmail(formData.email);
-        const mockUserData = {
-          id: 'user-101',
-          name: formData.email.split('@')[0],
-          email: formData.email,
-          role: mockRole,
-          avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80'
-        };
-        const mockToken = 'jwt_mock_token_agriharvest_9988';
-        login(mockUserData, mockToken);
-        toast.success(`Welcome back, ${mockUserData.name}! 👋`, { autoClose: 2500 });
-        navigate(getDashboardRoute(mockRole));
-      } else {
-        toast.error('Invalid email or password. Please check your credentials.');
+  try {
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_BASE_URL}/auth/login`,
+      {
+        email: formData.email,
+        password: formData.password,
       }
-    }, 1200);
-  };
+    );
+
+    const user = response.data.data.user;
+    const token = response.data.data.token;
+
+    login(user, token);
+
+    toast.success("Login successful!");
+
+    if (user.roles.includes("farmer")) {
+      navigate("/farmer-dashboard");
+    } else if (user.roles.includes("admin")) {
+      navigate("/admin-dashboard");
+    } else {
+      navigate("/dashboard");
+    }
+  } catch (error) {
+    if (error.response) {
+      toast.error(error.response.data.message);
+    } else {
+      toast.error("Unable to connect to the server.");
+    }
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleSocialLogin = (provider) => {
     setSocialLoading(provider);
