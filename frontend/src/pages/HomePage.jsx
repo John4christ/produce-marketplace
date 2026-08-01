@@ -25,15 +25,27 @@ const fetchProduce = async () => {
   setError(null);
 
   try {
-    const response = await api.get('/products');
+    const response = await api.get("/products");
 
-    setProducts(response.data.data);
+console.log("API RESPONSE:", response);
+console.log("response.data:", response.data);
+console.log("response.data.data:", response.data?.data);
+console.log("response.data.data.data:", response.data?.data?.data);
 
+if (Array.isArray(response)) {
+ setProducts(response.data.data);
+} else if (Array.isArray(response.data)) {
+  setProducts(response.data);
+} else if (Array.isArray(response.data?.data)) {
+  setProducts(response.data.data);
+} else {
+  console.log("UNKNOWN RESPONSE:", response);
+}
     setIsLoading(false);
   } catch (err) {
-    setError('Failed to fetch harvest data. Please refresh.');
+    console.error(err);
+    setError("Failed to fetch harvest data.");
     setIsLoading(false);
-    toast.error('Could not load produce items.');
   }
 };
 
@@ -42,23 +54,27 @@ const fetchProduce = async () => {
   }, []);
 
   const handleSearchSubmit = (searchTerm) => {
-    if (!searchTerm) {
-      setProducts(MOCK_PRODUCE);
-      return;
-    }
-    const lower = searchTerm.toLowerCase();
-    const filtered = MOCK_PRODUCE.filter(
-      (item) =>
-        item.title.toLowerCase().includes(lower) ||
-        item.farm.toLowerCase().includes(lower) ||
-        item.category.toLowerCase().includes(lower)
-    );
-    setProducts(filtered);
+  if (!searchTerm) {
+    fetchProduce();
+    return;
+  }
 
-    // Smooth scroll to results
-    const elem = document.getElementById('popular-harvest');
-    if (elem) elem.scrollIntoView({ behavior: 'smooth' });
-  };
+  const lower = searchTerm.toLowerCase();
+
+  const filtered = products.filter(
+    (item) =>
+      item.title.toLowerCase().includes(lower) ||
+      item.category.toLowerCase().includes(lower)
+  );
+
+  setProducts(filtered);
+
+  const elem = document.getElementById("popular-harvest");
+
+  if (elem) {
+    elem.scrollIntoView({ behavior: "smooth" });
+  }
+};
 
   return (
     <div className="home-page">
