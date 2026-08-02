@@ -5,6 +5,16 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Password;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\FarmerController;
+
+Route::middleware(['auth:sanctum'])
+    ->prefix('farmer')
+    ->group(function () {
+
+        Route::get('/dashboard', [FarmerController::class, 'dashboard'])
+            ->middleware(CheckRole::class . ':farmer');
+
+});
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');

@@ -1,34 +1,91 @@
-import React, { useState } from 'react';
-import { FarmerSidebar } from '../components/farmer/FarmerSidebar';
-import { DashboardHeader } from '../components/dashboard/DashboardHeader';
-import { Badge } from '../components/common/Badge';
-import { Button } from '../components/common/Button';
-import { useAuth } from '../context/AuthContext';
-import { formatCurrency } from '../utils/formatters';
-import { toast } from 'react-toastify';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+
+import { FarmerSidebar } from "../components/farmer/FarmerSidebar";
+import { DashboardHeader } from "../components/dashboard/DashboardHeader";
+import { Badge } from "../components/common/Badge";
+import { Button } from "../components/common/Button";
+import { useAuth } from "../context/AuthContext";
+import { formatCurrency } from "../utils/formatters";
+import { toast } from "react-toastify";
 import {
-  FiTrendingUp,
   FiPackage,
   FiBox,
   FiUserCheck,
   FiPlusCircle,
   FiCreditCard,
   FiArrowRight,
-  FiBell
-} from 'react-icons/fi';
+  FiBell,
+} from "react-icons/fi";
 
 export const FarmerDashboardPage = () => {
+  const [dashboard, setDashboard] = useState(null);
+
+
+useEffect(() => {
+
+    const fetchDashboard = async () => {
+
+        try {
+
+            const token = sessionStorage.getItem("agri_auth_token");
+
+            const response = await axios.get(
+                `${import.meta.env.VITE_API_BASE_URL}/farmer/dashboard`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            setDashboard(response.data.data);
+
+        } catch (error) {
+
+            console.log(error);
+
+            toast.error("Unable to load dashboard");
+
+        }
+
+    };
+
+    fetchDashboard();
+
+}, []);
   const { user } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const stats = [
-    { label: 'Monthly Revenue', value: '$12,840', icon: FiCreditCard, accent: 'primary' },
-    { label: 'Active Listings', value: '18', icon: FiBox, accent: 'amber' },
-    { label: 'Pending Orders', value: '9', icon: FiPackage, accent: 'green' },
-    { label: 'New Buyers', value: '24', icon: FiUserCheck, accent: 'purple' }
-  ];
-
+ const stats = dashboard
+    ? [
+        {
+            label: "Monthly Revenue",
+            value: formatCurrency(dashboard.stats.monthlyRevenue),
+            icon: FiCreditCard,
+            accent: "primary",
+        },
+        {
+            label: "Active Listings",
+            value: dashboard.stats.activeListings,
+            icon: FiBox,
+            accent: "amber",
+        },
+        {
+            label: "Pending Orders",
+            value: dashboard.stats.pendingOrders,
+            icon: FiPackage,
+            accent: "green",
+        },
+        {
+            label: "New Buyers",
+            value: dashboard.stats.newBuyers,
+            icon: FiUserCheck,
+            accent: "purple",
+        },
+      ]
+    : [];
   const salesTrend = [62, 72, 88, 96, 84, 104, 118];
 
   const orderRows = [

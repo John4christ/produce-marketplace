@@ -15,7 +15,6 @@ import {
 } from "react-icons/fi";
 import { TbLeaf, TbTractor } from "react-icons/tb";
 import axios from "axios";
-
 import { Input } from "../components/common/Input";
 import { Button } from "../components/common/Button";
 import { useAuth } from "../context/AuthContext";
@@ -149,53 +148,51 @@ export const RegisterPage = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!validateForm()) {
-      toast.error("Please correct the highlighted errors.");
-      return;
-    }
+  if (!validateForm()) {
+    toast.error("Please resolve the errors.");
+    return;
+  }
 
-    setIsLoading(true);
+  setIsLoading(true);
 
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/auth/register`,
-        {
-          name: formData.fullName,
-          email: formData.email,
-          password: formData.password,
-          password_confirmation: formData.confirmPassword,
-          role: formData.userType,
-        }
-      );
-
-      const user = response.data.data.user;
-      const token = response.data.data.token;
-
-      login(user, token);
-
-      toast.success("Registration successful!");
-
-      if (user.roles.includes("farmer")) {
-        navigate("/farmer-dashboard");
-      } else {
-        navigate("/dashboard");
+  try {
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_BASE_URL}/auth/register`,
+      {
+        name: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        password_confirmation: formData.confirmPassword,
+        role: formData.userType,
       }
-    } catch (error) {
-      if (error.response?.data?.errors) {
-        Object.values(error.response.data.errors).forEach((messages) => {
-          toast.error(messages[0]);
-        });
-      } else if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
-      } else {
-        toast.error("Unable to register.");
-      }
-    } finally {
-      setIsLoading(false);
+    );
+
+    const user = response.data.data.user;
+    const token = response.data.data.token;
+
+    login(user, token);
+
+    toast.success("Registration successful!");
+
+    if (user.roles.includes("farmer")) {
+      navigate("/farmer-dashboard");
+    } else {
+      navigate("/dashboard");
     }
-  };
+  } catch (error) {
+    if (error.response) {
+      toast.error(error.response.data.message);
+
+      console.log(error.response.data);
+    } else {
+      toast.error("Unable to connect to the server.");
+    }
+  } finally {
+    setIsLoading(false);
+  }
+};
   return (
   <div className="auth-page">
     <div className="auth-container register-container">
