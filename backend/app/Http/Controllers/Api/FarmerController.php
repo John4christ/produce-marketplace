@@ -1,12 +1,24 @@
 <?php
 
 namespace App\Http\Controllers\Api;
-
+use Laravel\Sanctum\HasApiTokens;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 class FarmerController extends Controller
 {
+    public function products(Request $request)
+{
+    $products = $request->user()
+        ->products()
+        ->latest()
+        ->get();
+
+    return response()->json([
+        'success' => true,
+        'data' => $products,
+    ]);
+}
     public function dashboard(Request $request)
     {
         $user = $request->user();
@@ -30,12 +42,11 @@ class FarmerController extends Controller
 
                 "orders" => [],
 
-                "products" => [],
+"products" => $user->products()->latest()->get(),
 
-                "notifications" => [],
+"notifications" => [],
 
-                "user" => $user
-
+"user" => $user,
             ]
         ]);
     }

@@ -2,18 +2,22 @@
 
 namespace Database\Seeders;
 
-use App\Models\Category;
 use Illuminate\Database\Seeder;
+use App\Models\Category;
 
 class CategorySeeder extends Seeder
 {
     public function run(): void
     {
         $categories = [
-            ['name' => 'Fruits', 'slug' => 'fruits', 'description' => 'Fresh fruits'],
-            ['name' => 'Vegetables', 'slug' => 'vegetables', 'description' => 'Fresh vegetables'],
-            ['name' => 'Dairy', 'slug' => 'dairy', 'description' => 'Dairy products'],
-            ['name' => 'Grains', 'slug' => 'grains', 'description' => 'Grains and cereals'],
+            ['name' => 'Fruits', 'slug' => 'fruits'],
+            ['name' => 'Vegetables', 'slug' => 'vegetables'],
+            ['name' => 'Grains', 'slug' => 'grains'],
+            ['name' => 'Tubers', 'slug' => 'tubers'],
+            ['name' => 'Livestock', 'slug' => 'livestock'],
+            ['name' => 'Dairy', 'slug' => 'dairy'],
+            ['name' => 'Herbs', 'slug' => 'herbs'],
+            ['name' => 'Spices', 'slug' => 'spices'],
         ];
 
         foreach ($categories as $category) {

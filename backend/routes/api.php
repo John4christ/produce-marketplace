@@ -13,7 +13,8 @@ Route::middleware(['auth:sanctum'])
 
         Route::get('/dashboard', [FarmerController::class, 'dashboard'])
             ->middleware(CheckRole::class . ':farmer');
-
+Route::get('/products', [FarmerController::class, 'products'])
+    ->middleware(CheckRole::class . ':farmer');
 });
 
 Route::prefix('auth')->group(function () {

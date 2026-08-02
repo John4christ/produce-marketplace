@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-
+import AddProductModal from "../components/farmer/AddProductModal";
 import { FarmerSidebar } from "../components/farmer/FarmerSidebar";
 import { DashboardHeader } from "../components/dashboard/DashboardHeader";
 import { Badge } from "../components/common/Badge";
@@ -20,39 +20,30 @@ import {
 
 export const FarmerDashboardPage = () => {
   const [dashboard, setDashboard] = useState(null);
+const [showAddModal, setShowAddModal] = useState(false);
 
+const fetchDashboard = async () => {
+    try {
+        const token = sessionStorage.getItem("agri_auth_token");
+
+        const response = await axios.get(
+            `${import.meta.env.VITE_API_BASE_URL}/farmer/dashboard`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        setDashboard(response.data.data);
+    } catch (error) {
+        console.log(error);
+        toast.error("Unable to load dashboard");
+    }
+};
 
 useEffect(() => {
-
-    const fetchDashboard = async () => {
-
-        try {
-
-            const token = sessionStorage.getItem("agri_auth_token");
-
-            const response = await axios.get(
-                `${import.meta.env.VITE_API_BASE_URL}/farmer/dashboard`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
-
-            setDashboard(response.data.data);
-
-        } catch (error) {
-
-            console.log(error);
-
-            toast.error("Unable to load dashboard");
-
-        }
-
-    };
-
     fetchDashboard();
-
 }, []);
   const { user } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -115,13 +106,7 @@ useEffect(() => {
     }
   ];
 
-  const products = [
-    { id: 'prod-1', title: 'Honeycrisp Apples', category: 'Fruits', stock: 45, sold: 124, price: 4.99 },
-    { id: 'prod-2', title: 'Baby Spinach Bunches', category: 'Vegetables', stock: 22, sold: 89, price: 3.49 },
-    { id: 'prod-3', title: 'Bulk Raw Honey', category: 'Honey', stock: 18, sold: 63, price: 12.99 },
-    { id: 'prod-4', title: 'Pasture Eggs', category: 'Dairy', stock: 50, sold: 142, price: 6.75 }
-  ];
-
+  const products = dashboard?.products || [];
   const inventorySummary = [
     { label: 'Total Inventory', value: '135 units', details: 'Stock across all listings' },
     { label: 'Low Stock', value: '5 items', details: 'Restock before next market' },
@@ -186,16 +171,19 @@ useEffect(() => {
     earnedThisMonth: 8920
   };
 
-  const openAddProduce = () => {
-    toast.info('Add Produce modal opening...', { autoClose: 2000 });
-  };
+ const openAddProduce = () => {
+    console.log("Add Produce button clicked");
+    setShowAddModal(true);
+};
 
-  return (
+ return (
+  <>
     <div className="dashboard-layout">
       <FarmerSidebar
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
         onOpenAddModal={openAddProduce}
+        
       />
 
       <div className="dashboard-main-content">
@@ -296,20 +284,22 @@ useEffect(() => {
                       </tr>
                     </thead>
                     <tbody>
-                      {orderRows.map((order) => (
-                        <tr key={order.id}>
-                          <td className="font-mono font-semibold">{order.id}</td>
-                          <td>{order.buyer}</td>
-                          <td>{order.items}</td>
-                          <td className="font-semibold">{formatCurrency(order.total)}</td>
-                          <td>
-                            <Badge variant={order.statusType} size="sm">
-                              {order.status}
-                            </Badge>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
+  {products.map((product) => (
+    <tr key={product.id}>
+      <td>{product.name}</td>
+
+      <td>{product.category?.name ?? "No Category"}</td>
+
+      <td>{product.quantity_available}</td>
+
+      <td>{product.unit}</td>
+
+      <td className="font-semibold">
+        {formatCurrency(product.price)}
+      </td>
+    </tr>
+  ))}
+</tbody>
                   </table>
                 </div>
               </section>
@@ -327,10 +317,10 @@ useEffect(() => {
                     <thead>
                       <tr>
                         <th>Product</th>
-                        <th>Category</th>
-                        <th>Stock</th>
-                        <th>Sold</th>
-                        <th>Price</th>
+<th>Category</th>
+<th>Quantity</th>
+<th>Unit</th>
+<th>Price</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -435,7 +425,14 @@ useEffect(() => {
             </aside>
           </div>
         </div>
-      </div>
+            </div>
     </div>
-  );
+
+    <AddProductModal
+      isOpen={showAddModal}
+      onClose={() => setShowAddModal(false)}
+      onSuccess={fetchDashboard}
+    />
+  </>
+);
 };

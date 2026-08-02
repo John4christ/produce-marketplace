@@ -2,43 +2,31 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use App\Models\Role;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
+     * @use HasFactory<UserFactory>
      */
+
     protected $fillable = [
         'name',
         'email',
         'password',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     */
     protected function casts(): array
     {
         return [
@@ -47,11 +35,23 @@ class User extends Authenticatable
         ];
     }
 
-    /**
-     * The roles that belong to the user.
-     */
     public function roles()
     {
         return $this->belongsToMany(Role::class);
     }
+
+    public function products()
+    {
+        return $this->hasMany(Product::class, 'farmer_id');
+    }
+    public function hasRole($roles)
+{
+    if (is_string($roles)) {
+        $roles = explode('|', $roles);
+    }
+
+    return $this->roles()
+        ->whereIn('slug', $roles)
+        ->exists();
+}
 }
