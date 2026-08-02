@@ -69,16 +69,19 @@ export const LoginPage = () => {
 
   try {
     const response = await axios.post(
-      `${import.meta.env.VITE_API_BASE_URL}/auth/login`,
-      {
-        email: formData.email,
-        password: formData.password,
-      }
-    );
+  `${import.meta.env.VITE_API_BASE_URL}/auth/login`,
+  {
+    email: formData.email,
+    password: formData.password,
+  }
+);
 
-    const user = response.data.data.user;
-    const token = response.data.data.token;
+// ADD THESE TWO LINES
+console.log(response.data);
+console.log(response.data.data.user);
 
+const user = response.data.data.user;
+const token = response.data.data.token;
     login(user, token);
 
     toast.success("Login successful!");

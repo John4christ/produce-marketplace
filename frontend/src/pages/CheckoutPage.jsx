@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiMapPin, FiTruck, FiCreditCard, FiCheckCircle } from 'react-icons/fi';
+import { FiCheckCircle } from 'react-icons/fi';
 import { useCart } from '../context/CartContext';
 import { formatCurrency } from '../utils/formatters';
 import { Button } from '../components/common/Button';
 import { toast } from 'react-toastify';
+import api from "../services/api";
 
 export const CheckoutPage = () => {
   const navigate = useNavigate();
@@ -13,15 +14,14 @@ export const CheckoutPage = () => {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [deliveryMethod, setDeliveryMethod] = useState('standard');
   const [paymentMethod, setPaymentMethod] = useState('card');
-  const [shippingAddress, setShippingAddress] = useState({
-    fullName: '',
-    street: '',
-    city: '',
-    postalCode: '',
-    country: '',
-    phone: ''
-  });
-
+ const [shippingAddress, setShippingAddress] = useState({
+  street: "",
+  city: "",
+  state: "",
+  postal_code: "",
+  country: "",
+  phone: ""
+});
   const deliveryFee = deliveryMethod === 'express' ? 8.99 : deliveryMethod === 'pickup' ? 0 : 4.99;
 
   const couponDiscount = useMemo(() => {
@@ -47,20 +47,43 @@ export const CheckoutPage = () => {
     }
   };
 
-  const handlePlaceOrder = () => {
-    if (!cartItems.length) {
-      toast.error('Your cart is empty. Add items before placing an order.');
-      return;
-    }
+ const handlePlaceOrder = async () => {
+  if (!cartItems.length) {
+    toast.error("Your cart is empty.");
+    return;
+  }
 
-    if (!shippingAddress.fullName || !shippingAddress.street || !shippingAddress.city || !shippingAddress.postalCode || !shippingAddress.country || !shippingAddress.phone) {
-      toast.error('Please complete your shipping address.');
-      return;
-    }
+  if (
+    !shippingAddress.street ||
+    !shippingAddress.city ||
+    !shippingAddress.state ||
+    !shippingAddress.postal_code ||
+    !shippingAddress.country
+) {
+    toast.error("Please complete your shipping address.");
+    return;
+}
+  try {
+   const orderData = {
+  shipping_address: shippingAddress,
+  notes: ""
+};
 
-    toast.success('Order placed! Thank you for supporting local farms.');
-    navigate('/');
-  };
+    const response = await api.post("/orders", orderData);
+
+    toast.success("Order placed successfully!");
+
+    navigate("/dashboard");
+  } catch (error) {
+    console.error(error);
+console.log(error.response?.data);
+
+toast.error(
+  error.response?.data?.message ||
+  JSON.stringify(error.response?.data?.errors) ||
+  "Failed to place order."
+);  }
+};
 
   const changeAddress = (field, value) => {
     setShippingAddress((prev) => ({ ...prev, [field]: value }));
@@ -83,15 +106,7 @@ export const CheckoutPage = () => {
             </div>
 
             <div className="form-grid">
-              <label>
-                Full name
-                <input
-                  type="text"
-                  value={shippingAddress.fullName}
-                  onChange={(e) => changeAddress('fullName', e.target.value)}
-                  placeholder="Jane Doe"
-                />
-              </label>
+              
               <label className="full-width">
                 Street address
                 <input
@@ -111,11 +126,20 @@ export const CheckoutPage = () => {
                 />
               </label>
               <label>
+  State
+  <input
+    type="text"
+    value={shippingAddress.state}
+    onChange={(e) => changeAddress("state", e.target.value)}
+    placeholder="California"
+  />
+</label>
+              <label>
                 Postal code
                 <input
                   type="text"
-                  value={shippingAddress.postalCode}
-                  onChange={(e) => changeAddress('postalCode', e.target.value)}
+                  value={shippingAddress.postal_code}
+                  onChange={(e) => changeAddress("postal_code", e.target.value)}
                   placeholder="94952"
                 />
               </label>

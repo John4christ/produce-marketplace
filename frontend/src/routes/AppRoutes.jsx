@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { MainLayout } from '../layouts/MainLayout';
 import { HomePage } from '../pages/HomePage';
 import { LoginPage } from '../pages/LoginPage';
@@ -13,15 +13,7 @@ import { CheckoutPage } from '../pages/CheckoutPage';
 import { useAuth } from '../context/AuthContext';
 import ProtectedRoute from "../components/ProtectedRoute";
 
-const AdminRoute = ({ children }) => {
-  const { user, isAuthenticated } = useAuth();
 
-  if (!isAuthenticated || !user?.roles?.includes("admin")) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return children;
-};
 
 export const AppRoutes = () => {
   return (
@@ -53,7 +45,7 @@ export const AppRoutes = () => {
       <Route
   path="/dashboard"
   element={
-    <ProtectedRoute>
+    <ProtectedRoute allowedRoles={["buyer"]}>
       <BuyerDashboardPage />
     </ProtectedRoute>
   }
@@ -61,19 +53,19 @@ export const AppRoutes = () => {
       <Route
   path="/farmer-dashboard"
   element={
-    <ProtectedRoute>
+    <ProtectedRoute allowedRoles={["farmer"]}>
       <FarmerDashboardPage />
     </ProtectedRoute>
   }
 />
       <Route
-        path="/admin-dashboard"
-        element={
-          <AdminRoute>
-            <AdminDashboardPage />
-          </AdminRoute>
-        }
-      />
+  path="/admin-dashboard"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminDashboardPage />
+    </ProtectedRoute>
+  }
+/>
       <Route
         path="/product/:productId"
         element={
@@ -94,7 +86,7 @@ export const AppRoutes = () => {
         path="/checkout"
         element={
           <MainLayout>
-            <CheckoutPage />
+            <CheckoutPage allowedRoles={["buyer"]}/>
           </MainLayout>
         }
       />

@@ -7,6 +7,7 @@ import { Button } from '../components/common/Button';
 import { toast } from 'react-toastify';
 
 export const CartPage = () => {
+  const navigate = useNavigate();
   const { cartItems, cartSubtotal, updateQuantity, removeFromCart, clearCart } = useCart();
   const [coupon, setCoupon] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);

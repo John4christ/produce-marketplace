@@ -17,14 +17,14 @@ class RegisterRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', 'string', 'in:admin,farmer,buyer'],
+            'role' => ['required', 'string', 'in:farmer,buyer'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'role.in' => 'The selected role is invalid. Allowed roles: admin, farmer, buyer.',
+            'role.in' => 'The selected role is invalid. Allowed roles are buyer and farmer.',
         ];
     }
 }
