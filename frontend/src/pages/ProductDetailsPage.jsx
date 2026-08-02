@@ -1,29 +1,139 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { FiStar, FiPlus, FiMinus, FiShoppingBag, FiMapPin, FiCheckCircle } from 'react-icons/fi';
+import { FiStar, FiPlus, FiMinus, FiShoppingBag, FiMapPin, FiCheckCircle, FiRefreshCw } from 'react-icons/fi';
 import { useCart } from '../context/CartContext';
-import { MOCK_PRODUCE } from '../services/mockData';
+import { apiClient } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
 import { Badge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
+import { Skeleton } from '../components/common/Skeleton';
+import { ErrorState } from '../components/common/ErrorState';
 import { toast } from 'react-toastify';
 
 export const ProductDetailsPage = () => {
   const { productId } = useParams();
-  const product = useMemo(
-    () => MOCK_PRODUCE.find((item) => item.id === productId),
-    [productId]
-  );
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [product, setProduct] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  if (!product) {
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const [productRes, reviewsRes] = await Promise.all([
+          apiClient.get(`/products/${productId}`),
+          apiClient.get(`/products/${productId}/reviews`),
+        ]);
+
+        const productData = productRes?.data || productRes;
+        setProduct(productData);
+
+        const reviewsData = reviewsRes?.data || reviewsRes;
+        setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+
+        if (productData?.category?.id) {
+          const relatedRes = await apiClient.get('/products', {
+            params: {
+              category_id: productData.category.id,
+              per_page: 4,
+              status: 'published',
+            },
+          });
+          const relatedData = relatedRes?.data || relatedRes;
+          const items = Array.isArray(relatedData) ? relatedData : relatedData?.data || [];
+          setRelatedProducts(items.filter((p) => p.id !== productId).slice(0, 3));
+        }
+      } catch (err) {
+        setError(err.message || 'Failed to load product');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (productId) {
+      fetchProduct();
+    }
+  }, [productId]);
+
+  const galleryImages = useMemo(() => {
+    if (!product?.images?.length) return ['/placeholder.jpg'];
+    return product.images
+      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+      .map((img) => img.url);
+  }, [product]);
+
+  const averageRating = useMemo(() => {
+    if (!reviews.length) return 0;
+    return (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1);
+  }, [reviews]);
+
+  const handleQuantityChange = (value) => {
+    setQuantity((prev) => Math.max(1, prev + value));
+  };
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    const cartProduct = {
+      id: product.id,
+      title: product.name,
+      price: product.price,
+      unit: product.unit,
+      image: product.images?.[0]?.url || '/placeholder.jpg',
+      farm: product.farmer?.name || 'Local Farm',
+    };
+    addToCart({ ...cartProduct, quantity });
+    toast.success(`${product.name} added to cart.`);
+  };
+
+  const handleBuyNow = () => {
+    if (!product) return;
+    const cartProduct = {
+      id: product.id,
+      title: product.name,
+      price: product.price,
+      unit: product.unit,
+      image: product.images?.[0]?.url || '/placeholder.jpg',
+      farm: product.farmer?.name || 'Local Farm',
+    };
+    addToCart({ ...cartProduct, quantity });
+    toast.success('Ready for checkout!');
+    navigate('/checkout');
+  };
+
+  if (loading) {
+    return (
+      <div className="product-details-page">
+        <div className="product-hero glass-panel">
+          <Skeleton height="24px" width="200px" className="mb-3" />
+          <Skeleton height="40px" width="60%" />
+        </div>
+        <div className="product-details-grid">
+          <div className="product-gallery-panel glass-panel">
+            <Skeleton height="400px" borderRadius="var(--radius-lg)" />
+          </div>
+          <div className="product-info-panel glass-panel">
+            <Skeleton height="20px" width="40%" className="mb-3" />
+            <Skeleton height="32px" width="50%" className="mb-4" />
+            <Skeleton height="100px" width="100%" className="mb-4" />
+            <Skeleton height="48px" width="100%" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !product) {
     return (
       <div className="product-details-page">
         <div className="product-details-empty glass-panel">
           <h2>Product not found</h2>
-          <p>The item you are looking for is no longer available.</p>
+          <p>{error || 'The item you are looking for is no longer available.'}</p>
           <Link to="/" className="btn btn-primary btn-md">
             Back to Marketplace
           </Link>
@@ -31,55 +141,6 @@ export const ProductDetailsPage = () => {
       </div>
     );
   }
-
-  const galleryImages = [
-    product.image,
-    product.image,
-    product.image
-  ];
-
-  const reviews = [
-    {
-      id: 'review-1',
-      name: 'Maria Chen',
-      avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=120&q=80',
-      rating: 5,
-      date: 'Jul 28, 2026',
-      comment: 'This batch of produce arrived crisp and flavorful. The quality is amazing, and the farmer details gave me confidence in sourcing local.'
-    },
-    {
-      id: 'review-2',
-      name: 'Jordan Price',
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=120&q=80',
-      rating: 4,
-      date: 'Jul 22, 2026',
-      comment: 'Freshness was excellent and the seller shipped quickly. I would buy again for weekly delivery.'
-    },
-    {
-      id: 'review-3',
-      name: 'Nina Patel',
-      avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=120&q=80',
-      rating: 5,
-      date: 'Jul 18, 2026',
-      comment: 'I love supporting local farmers. The produce was bright, clean, and absolutely delicious in every recipe.'
-    }
-  ];
-
-  const relatedProducts = MOCK_PRODUCE.filter((item) => item.id !== product.id).slice(0, 3);
-
-  const handleQuantityChange = (value) => {
-    setQuantity((prev) => Math.max(1, prev + value));
-  };
-
-  const handleAddToCart = () => {
-    addToCart({ ...product, quantity });
-    toast.success(`${product.title} added to cart.`);
-  };
-
-  const handleBuyNow = () => {
-    addToCart({ ...product, quantity });
-    toast.success('Ready for checkout!');
-  };
 
   return (
     <div className="product-details-page">
@@ -89,9 +150,9 @@ export const ProductDetailsPage = () => {
             Marketplace
           </Link>
           <span>·</span>
-          <span>{product.category}</span>
+          <span>{product.category?.name || 'Produce'}</span>
         </div>
-        <h1>{product.title}</h1>
+        <h1>{product.name}</h1>
         <p className="product-hero-copy">
           Discover the origin of your produce, compare farmer details, and choose fresh local harvests with confidence.
         </p>
@@ -101,31 +162,33 @@ export const ProductDetailsPage = () => {
         <div className="product-gallery-panel glass-panel">
           <img
             src={galleryImages[selectedImageIndex]}
-            alt={product.title}
+            alt={product.images?.[selectedImageIndex]?.alt_text || product.name}
             className="gallery-main-image"
           />
-          <div className="gallery-thumbs-row">
-            {galleryImages.map((src, index) => (
-              <button
-                key={index}
-                type="button"
-                className={`gallery-thumb-btn ${index === selectedImageIndex ? 'active' : ''}`}
-                onClick={() => setSelectedImageIndex(index)}
-                aria-label={`View image ${index + 1}`}
-              >
-                <img src={src} alt={`${product.title} thumbnail ${index + 1}`} />
-              </button>
-            ))}
-          </div>
+          {galleryImages.length > 1 && (
+            <div className="gallery-thumbs-row">
+              {galleryImages.map((src, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  className={`gallery-thumb-btn ${index === selectedImageIndex ? 'active' : ''}`}
+                  onClick={() => setSelectedImageIndex(index)}
+                  aria-label={`View image ${index + 1}`}
+                >
+                  <img src={src} alt={`${product.name} thumbnail ${index + 1}`} />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="product-info-panel glass-panel">
           <div className="product-meta-row">
-            <span className="product-category">{product.category}</span>
+            <span className="product-category">{product.category?.name || 'Produce'}</span>
             <div className="product-rating-pill">
               <FiStar className="icon-tiny" />
-              <span>{product.rating}</span>
-              <span>({product.reviewsCount} reviews)</span>
+              <span>{averageRating}</span>
+              <span>({reviews.length} reviews)</span>
             </div>
           </div>
 
@@ -137,31 +200,25 @@ export const ProductDetailsPage = () => {
                 <span className="price-unit">/ {product.unit}</span>
               </div>
             </div>
-            <Badge variant="primary">{product.badge || 'Farm Fresh'}</Badge>
+            <Badge variant="primary">Farm Fresh</Badge>
           </div>
 
           <div className="product-description">
-            <p>
-              Sustainably grown by {product.farm}, this {product.category.toLowerCase()} selection is harvested on demand and packaged with regenerative practices for peak flavor.
-            </p>
+            <p>{product.description || 'Fresh farm produce sourced directly from local farmers.'}</p>
           </div>
 
           <div className="product-detail-list">
             <div>
               <span>Farmer</span>
-              <strong>{product.farm}</strong>
-            </div>
-            <div>
-              <span>Location</span>
-              <strong>{product.farmLocation}</strong>
+              <strong>{product.farmer?.name || 'Local Farm'}</strong>
             </div>
             <div>
               <span>Stock available</span>
-              <strong>{product.stock} items</strong>
+              <strong>{product.quantity_available ?? 0} items</strong>
             </div>
             <div>
-              <span>Organic</span>
-              <strong>{product.isOrganic ? 'Yes' : 'No'}</strong>
+              <span>Status</span>
+              <strong>{product.status}</strong>
             </div>
           </div>
 
@@ -197,26 +254,26 @@ export const ProductDetailsPage = () => {
             <div className="farm-owner-row">
               <div className="farm-avatar">
                 <img
-                  src={product.image}
-                  alt={product.farm}
+                  src={product.images?.[0]?.url || '/placeholder.jpg'}
+                  alt={product.farmer?.name || 'Farm'}
                 />
               </div>
               <div>
                 <p className="text-muted">Sold by</p>
-                <h4>{product.farm}</h4>
+                <h4>{product.farmer?.name || 'Local Farm'}</h4>
                 <p className="farm-location">
-                  <FiMapPin className="icon-tiny" /> {product.farmLocation}
+                  <FiMapPin className="icon-tiny" /> Local Farm
                 </p>
               </div>
             </div>
             <div className="farm-stats-row">
               <div>
                 <span>Trusted Rating</span>
-                <strong>{product.rating} / 5</strong>
+                <strong>{averageRating} / 5</strong>
               </div>
               <div>
                 <span>Verified Orders</span>
-                <strong>{product.reviewsCount * 4}</strong>
+                <strong>{reviews.length * 4}+</strong>
               </div>
             </div>
           </div>
@@ -230,27 +287,31 @@ export const ProductDetailsPage = () => {
               <h3 className="section-title-sm">Customer Reviews</h3>
               <p className="text-muted text-sm">What buyers say about this harvest.</p>
             </div>
-            <Badge variant="primary" size="sm">{product.rating} / 5</Badge>
+            <Badge variant="primary" size="sm">{averageRating} / 5</Badge>
           </div>
-          <div className="reviews-list">
-            {reviews.map((review) => (
-              <div key={review.id} className="review-card">
-                <div className="review-avatar">
-                  <img src={review.avatar} alt={review.name} />
-                </div>
-                <div className="review-body">
-                  <div className="review-header">
-                    <strong>{review.name}</strong>
-                    <span>{review.date}</span>
+          {reviews.length === 0 ? (
+            <p className="text-muted">No reviews yet. Be the first to review this product!</p>
+          ) : (
+            <div className="reviews-list">
+              {reviews.map((review) => (
+                <div key={review.id} className="review-card">
+                  <div className="review-avatar">
+                    <img src={review.user?.avatar || '/placeholder.jpg'} alt={review.user?.name || 'User'} />
                   </div>
-                  <div className="review-rating">
-                    <FiStar className="star-filled" /> {review.rating}
+                  <div className="review-body">
+                    <div className="review-header">
+                      <strong>{review.user?.name || 'Anonymous'}</strong>
+                      <span>{review.created_at ? new Date(review.created_at).toLocaleDateString() : ''}</span>
+                    </div>
+                    <div className="review-rating">
+                      <FiStar className="star-filled" /> {review.rating}
+                    </div>
+                    <p>{review.comment || review.title || ''}</p>
                   </div>
-                  <p>{review.comment}</p>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
 
         <aside className="related-panel glass-panel">
@@ -261,17 +322,21 @@ export const ProductDetailsPage = () => {
             </div>
             <Badge variant="amber" size="sm">Recommended</Badge>
           </div>
-          <div className="related-products-grid">
-            {relatedProducts.map((item) => (
-              <Link key={item.id} to={`/product/${item.id}`} className="related-product-card">
-                <img src={item.image} alt={item.title} />
-                <div>
-                  <strong>{item.title}</strong>
-                  <span>{formatCurrency(item.price)} / {item.unit}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
+          {relatedProducts.length === 0 ? (
+            <p className="text-muted">No related products found.</p>
+          ) : (
+            <div className="related-products-grid">
+              {relatedProducts.map((item) => (
+                <Link key={item.id} to={`/product/${item.id}`} className="related-product-card">
+                  <img src={item.images?.[0]?.url || '/placeholder.jpg'} alt={item.name} />
+                  <div>
+                    <strong>{item.name}</strong>
+                    <span>{formatCurrency(item.price)} / {item.unit}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </aside>
       </div>
     </div>

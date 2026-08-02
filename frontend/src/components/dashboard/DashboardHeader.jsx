@@ -54,6 +54,9 @@ export const DashboardHeader = ({ onSearchChange, searchQuery = '' }) => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
+  const userInitial = user?.name?.charAt(0)?.toUpperCase() || 'U';
+  const userRole = user?.roles?.[0]?.slug || 'buyer';
+
   return (
     <header className="dashboard-top-nav glass-panel">
       <div className="dash-search-container">
@@ -130,7 +133,9 @@ export const DashboardHeader = ({ onSearchChange, searchQuery = '' }) => {
               }}
               aria-label="Profile menu"
             >
-              <img src={user.avatar} alt={user.name} className="dash-user-avatar" />
+              <div className="dash-user-avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-primary)', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', fontSize: '14px', fontWeight: 600 }}>
+                {userInitial}
+              </div>
               <span className="dash-user-name">{user.name.split(' ')[0]}</span>
             </button>
 
@@ -140,7 +145,7 @@ export const DashboardHeader = ({ onSearchChange, searchQuery = '' }) => {
                   <p className="dropdown-user-name">{user.name}</p>
                   <p className="dropdown-user-email">{user.email}</p>
                   <Badge variant="primary" size="sm" className="mt-1">
-                    BUYER ACCOUNT
+                    {userRole.toUpperCase()} ACCOUNT
                   </Badge>
                 </div>
                 <div className="dropdown-divider" />

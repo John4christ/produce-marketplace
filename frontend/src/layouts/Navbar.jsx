@@ -32,11 +32,14 @@ export const Navbar = ({ onSearch }) => {
     if (onSearch) onSearch(navSearch);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     setUserDropdownOpen(false);
     navigate('/');
   };
+
+  const userRole = user?.roles?.[0]?.slug || 'buyer';
+  const userInitial = user?.name?.charAt(0)?.toUpperCase() || 'U';
 
   return (
     <header className="navbar-sticky glass-panel">
@@ -54,7 +57,7 @@ export const Navbar = ({ onSearch }) => {
         {/* Desktop Navigation Links */}
         <nav className="desktop-nav">
           <Link to="/" className="nav-link active">Home</Link>
-          <a href="#popular-harvest" className="nav-link">Fresh Produce</a>
+          <Link to="/dashboard" className="nav-link">Fresh Produce</Link>
           <a href="#meet-farmers" className="nav-link">Our Farmers</a>
           <a href="#about-us" className="nav-link">Eco-Mission</a>
         </nav>
@@ -96,11 +99,13 @@ export const Navbar = ({ onSearch }) => {
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                 aria-label="User account menu"
               >
-                <img src={user.avatar} alt={user.name} className="user-avatar-tiny" />
+                <div className="user-avatar-tiny" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-primary)', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', fontSize: '14px', fontWeight: 600 }}>
+                  {userInitial}
+                </div>
                 <div className="user-meta-desktop">
                   <span className="user-name-sm">{user.name.split(' ')[0]}</span>
                   <Badge variant="primary" size="sm">
-                    {user.role ? user.role.toUpperCase() : 'BUYER'}
+                    {userRole.toUpperCase()}
                   </Badge>
                 </div>
               </button>
@@ -112,11 +117,22 @@ export const Navbar = ({ onSearch }) => {
                     <p className="dropdown-user-email">{user.email}</p>
                   </div>
                   <div className="dropdown-divider" />
-                  {user.role === 'admin' && (
+                  {userRole === 'admin' && (
                     <Link to="/admin-dashboard" className="dropdown-item">
                       <FiShield /> <span>Admin Dashboard</span>
                     </Link>
                   )}
+                  {userRole === 'farmer' && (
+                    <Link to="/farmer-dashboard" className="dropdown-item">
+                      <FiUser /> <span>Farmer Dashboard</span>
+                    </Link>
+                  )}
+                  {userRole === 'buyer' && (
+                    <Link to="/dashboard" className="dropdown-item">
+                      <FiShoppingBag /> <span>Buyer Dashboard</span>
+                    </Link>
+                  )}
+                  <div className="dropdown-divider" />
                   <button className="dropdown-item red-text" onClick={handleLogout}>
                     <FiLogOut /> <span>Sign Out</span>
                   </button>
@@ -150,15 +166,25 @@ export const Navbar = ({ onSearch }) => {
         <div className="mobile-drawer glass-panel">
           <nav className="mobile-nav-links">
             <Link to="/" onClick={() => setMobileMenuOpen(false)}>Home</Link>
-            <a href="#popular-harvest" onClick={() => setMobileMenuOpen(false)}>Fresh Produce</a>
+            <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>Fresh Produce</Link>
             <a href="#meet-farmers" onClick={() => setMobileMenuOpen(false)}>Our Farmers</a>
             <a href="#about-us" onClick={() => setMobileMenuOpen(false)}>Eco-Mission</a>
             <div className="mobile-auth-links mt-4">
               {isAuthenticated ? (
                 <div className="flex-column gap-2">
-                  {user.role === 'admin' && (
+                  {userRole === 'admin' && (
                     <Link to="/admin-dashboard" className="btn btn-outline btn-full" onClick={() => setMobileMenuOpen(false)}>
                       Admin Dashboard
+                    </Link>
+                  )}
+                  {userRole === 'farmer' && (
+                    <Link to="/farmer-dashboard" className="btn btn-outline btn-full" onClick={() => setMobileMenuOpen(false)}>
+                      Farmer Dashboard
+                    </Link>
+                  )}
+                  {userRole === 'buyer' && (
+                    <Link to="/dashboard" className="btn btn-outline btn-full" onClick={() => setMobileMenuOpen(false)}>
+                      Buyer Dashboard
                     </Link>
                   )}
                   <button className="btn btn-outline btn-full" onClick={handleLogout}>

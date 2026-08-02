@@ -30,6 +30,8 @@ export const DashboardSidebar = ({ isCollapsed, onToggleCollapse, wishlistCount 
     { label: 'Account Settings', icon: FiSettings, path: '/settings', badge: null }
   ];
 
+  const userInitial = user?.name?.charAt(0)?.toUpperCase() || 'U';
+
   return (
     <aside className={`dashboard-sidebar glass-panel ${isCollapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
@@ -55,7 +57,9 @@ export const DashboardSidebar = ({ isCollapsed, onToggleCollapse, wishlistCount 
 
       {!isCollapsed && user && (
         <div className="sidebar-user-pill">
-          <img src={user.avatar} alt={user.name} className="pill-avatar" />
+          <div className="pill-avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-primary)', color: '#fff', borderRadius: '50%', width: '40px', height: '40px', fontSize: '16px', fontWeight: 600 }}>
+            {userInitial}
+          </div>
           <div className="pill-meta">
             <span className="pill-name">{user.name}</span>
             <span className="pill-role">Buyer Dashboard</span>

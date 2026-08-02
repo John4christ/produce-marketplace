@@ -14,7 +14,6 @@ import { useAuth } from '../context/AuthContext';
 import ProtectedRoute from "../components/ProtectedRoute";
 
 
-
 export const AppRoutes = () => {
   return (
     <Routes>
@@ -43,29 +42,29 @@ export const AppRoutes = () => {
         }
       />
       <Route
-  path="/dashboard"
-  element={
-    <ProtectedRoute allowedRoles={["buyer"]}>
-      <BuyerDashboardPage />
-    </ProtectedRoute>
-  }
-/>
+        path="/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["buyer"]}>
+            <BuyerDashboardPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
-  path="/farmer-dashboard"
-  element={
-    <ProtectedRoute allowedRoles={["farmer"]}>
-      <FarmerDashboardPage />
-    </ProtectedRoute>
-  }
-/>
+        path="/farmer-dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["farmer"]}>
+            <FarmerDashboardPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
-  path="/admin-dashboard"
-  element={
-    <ProtectedRoute allowedRoles={["admin"]}>
-      <AdminDashboardPage />
-    </ProtectedRoute>
-  }
-/>
+        path="/admin-dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminDashboardPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/product/:productId"
         element={
@@ -85,9 +84,9 @@ export const AppRoutes = () => {
       <Route
         path="/checkout"
         element={
-          <MainLayout>
-            <CheckoutPage allowedRoles={["buyer"]}/>
-          </MainLayout>
+          <ProtectedRoute allowedRoles={["buyer"]}>
+            <CheckoutPage />
+          </ProtectedRoute>
         }
       />
       <Route

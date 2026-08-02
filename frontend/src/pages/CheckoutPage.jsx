@@ -1,27 +1,33 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiCheckCircle } from 'react-icons/fi';
+import { FiCheckCircle, FiRefreshCw } from 'react-icons/fi';
 import { useCart } from '../context/CartContext';
+import { apiClient } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
 import { Button } from '../components/common/Button';
+import { Skeleton } from '../components/common/Skeleton';
+import { ErrorState } from '../components/common/ErrorState';
 import { toast } from 'react-toastify';
-import api from "../services/api";
 
 export const CheckoutPage = () => {
   const navigate = useNavigate();
-  const { cartItems, cartSubtotal } = useCart();
+  const { cartItems, cartSubtotal, clearCart } = useCart();
   const [coupon, setCoupon] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [deliveryMethod, setDeliveryMethod] = useState('standard');
   const [paymentMethod, setPaymentMethod] = useState('card');
- const [shippingAddress, setShippingAddress] = useState({
-  street: "",
-  city: "",
-  state: "",
-  postal_code: "",
-  country: "",
-  phone: ""
-});
+  const [shippingAddress, setShippingAddress] = useState({
+    street: '',
+    city: '',
+    state: '',
+    postal_code: '',
+    country: '',
+    phone: '',
+  });
+  const [placingOrder, setPlacingOrder] = useState(false);
+  const [syncingCart, setSyncingCart] = useState(true);
+  const [error, setError] = useState(null);
+
   const deliveryFee = deliveryMethod === 'express' ? 8.99 : deliveryMethod === 'pickup' ? 0 : 4.99;
 
   const couponDiscount = useMemo(() => {
@@ -32,6 +38,41 @@ export const CheckoutPage = () => {
   }, [appliedCoupon, cartSubtotal]);
 
   const totalAmount = cartSubtotal + deliveryFee - couponDiscount;
+
+  useEffect(() => {
+    const syncCartToBackend = async () => {
+      try {
+        setSyncingCart(true);
+        setError(null);
+
+        const backendCartResponse = await apiClient.get('/cart');
+        const backendCart = backendCartResponse?.data || backendCartResponse;
+        const backendItems = backendCart?.items || [];
+
+        const backendProductIds = new Set(backendItems.map((item) => item.product_id));
+
+        for (const item of cartItems) {
+          if (!backendProductIds.has(item.id)) {
+            await apiClient.post('/cart/items', {
+              product_id: item.id,
+              quantity: item.quantity,
+            });
+          }
+        }
+      } catch (err) {
+        setError(err.message || 'Failed to sync cart');
+        toast.error('Cart sync failed. Please try again.');
+      } finally {
+        setSyncingCart(false);
+      }
+    };
+
+    if (cartItems.length > 0) {
+      syncCartToBackend();
+    } else {
+      setSyncingCart(false);
+    }
+  }, [cartItems]);
 
   const handleApplyCoupon = () => {
     const normalized = coupon.trim().toUpperCase();
@@ -47,47 +88,77 @@ export const CheckoutPage = () => {
     }
   };
 
- const handlePlaceOrder = async () => {
-  if (!cartItems.length) {
-    toast.error("Your cart is empty.");
-    return;
-  }
+  const handlePlaceOrder = async () => {
+    if (!cartItems.length) {
+      toast.error('Your cart is empty.');
+      return;
+    }
 
-  if (
-    !shippingAddress.street ||
-    !shippingAddress.city ||
-    !shippingAddress.state ||
-    !shippingAddress.postal_code ||
-    !shippingAddress.country
-) {
-    toast.error("Please complete your shipping address.");
-    return;
-}
-  try {
-   const orderData = {
-  shipping_address: shippingAddress,
-  notes: ""
-};
+    if (
+      !shippingAddress.street ||
+      !shippingAddress.city ||
+      !shippingAddress.state ||
+      !shippingAddress.postal_code ||
+      !shippingAddress.country
+    ) {
+      toast.error('Please complete your shipping address.');
+      return;
+    }
 
-    const response = await api.post("/orders", orderData);
+    setPlacingOrder(true);
+    try {
+      const orderData = {
+        shipping_address: shippingAddress,
+        notes: `Delivery method: ${deliveryMethod}. Payment method: ${paymentMethod}.${appliedCoupon ? ` Coupon: ${appliedCoupon.code}.` : ''}`,
+      };
 
-    toast.success("Order placed successfully!");
-
-    navigate("/dashboard");
-  } catch (error) {
-    console.error(error);
-console.log(error.response?.data);
-
-toast.error(
-  error.response?.data?.message ||
-  JSON.stringify(error.response?.data?.errors) ||
-  "Failed to place order."
-);  }
-};
+      await apiClient.post('/orders', orderData);
+      clearCart();
+      toast.success('Order placed successfully!');
+      navigate('/dashboard');
+    } catch (err) {
+      toast.error(err.message || 'Failed to place order. Please try again.');
+    } finally {
+      setPlacingOrder(false);
+    }
+  };
 
   const changeAddress = (field, value) => {
     setShippingAddress((prev) => ({ ...prev, [field]: value }));
   };
+
+  if (syncingCart) {
+    return (
+      <div className="checkout-page">
+        <div className="checkout-hero glass-panel">
+          <span className="section-tag">Checkout</span>
+          <h1>Complete your order</h1>
+        </div>
+        <div className="checkout-grid">
+          <section className="checkout-form-panel glass-panel">
+            <div className="flex-center" style={{ padding: '4rem' }}>
+              <Skeleton height="20px" width="200px" />
+              <p className="text-muted mt-3">Syncing your cart...</p>
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="checkout-page">
+        <div className="checkout-hero glass-panel">
+          <span className="section-tag">Checkout</span>
+          <h1>Complete your order</h1>
+        </div>
+        <div className="checkout-grid">
+          <ErrorState message={error} onRetry={() => window.location.reload()} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="checkout-page">
@@ -106,7 +177,6 @@ toast.error(
             </div>
 
             <div className="form-grid">
-              
               <label className="full-width">
                 Street address
                 <input
@@ -126,20 +196,20 @@ toast.error(
                 />
               </label>
               <label>
-  State
-  <input
-    type="text"
-    value={shippingAddress.state}
-    onChange={(e) => changeAddress("state", e.target.value)}
-    placeholder="California"
-  />
-</label>
+                State
+                <input
+                  type="text"
+                  value={shippingAddress.state}
+                  onChange={(e) => changeAddress('state', e.target.value)}
+                  placeholder="California"
+                />
+              </label>
               <label>
                 Postal code
                 <input
                   type="text"
                   value={shippingAddress.postal_code}
-                  onChange={(e) => changeAddress("postal_code", e.target.value)}
+                  onChange={(e) => changeAddress('postal_code', e.target.value)}
                   placeholder="94952"
                 />
               </label>
@@ -316,7 +386,7 @@ toast.error(
             </div>
           </div>
 
-          <Button variant="primary" size="lg" fullWidth onClick={handlePlaceOrder}>
+          <Button variant="primary" size="lg" fullWidth onClick={handlePlaceOrder} isLoading={placingOrder}>
             Place Order
           </Button>
 

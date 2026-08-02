@@ -1,16 +1,22 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiTrash2, FiPlus, FiMinus, FiShoppingBag } from 'react-icons/fi';
+import { FiTrash2, FiPlus, FiMinus, FiShoppingBag, FiRefreshCw } from 'react-icons/fi';
 import { useCart } from '../context/CartContext';
+import { apiClient } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
 import { Button } from '../components/common/Button';
+import { Skeleton } from '../components/common/Skeleton';
+import { ErrorState } from '../components/common/ErrorState';
 import { toast } from 'react-toastify';
 
 export const CartPage = () => {
   const navigate = useNavigate();
-  const { cartItems, cartSubtotal, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { cartItems, cartSubtotal, updateQuantity, removeFromCart, clearCart, setCartItems } = useCart();
   const [coupon, setCoupon] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [error, setError] = useState(null);
 
   const deliveryFee = cartSubtotal > 35 || cartSubtotal === 0 ? 0 : 4.99;
 
@@ -22,6 +28,39 @@ export const CartPage = () => {
   }, [appliedCoupon, cartSubtotal]);
 
   const totalAmount = cartSubtotal + deliveryFee - couponDiscount;
+
+  useEffect(() => {
+    const syncCart = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await apiClient.get('/cart');
+        const backendCart = response?.data || response;
+        const items = backendCart?.items || [];
+
+        const mappedItems = items.map((item) => {
+          const product = item.product || {};
+          return {
+            id: item.id || product.id,
+            title: product.name || 'Unknown Product',
+            price: Number(item.unit_price || product.price || 0),
+            unit: product.unit || 'unit',
+            image: product.images?.[0]?.url || '/placeholder.jpg',
+            farm: product.farmer?.name || 'Local Farm',
+            quantity: Number(item.quantity || 1),
+          };
+        });
+
+        setCartItems(mappedItems);
+      } catch (err) {
+        setError(err.message || 'Failed to load cart');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    syncCart();
+  }, [setCartItems]);
 
   const handleApplyCoupon = () => {
     const normalized = coupon.trim().toUpperCase();
@@ -37,6 +76,50 @@ export const CartPage = () => {
     }
   };
 
+  const handleQuantityChange = async (itemId, newQuantity) => {
+    if (newQuantity <= 0) {
+      await handleRemoveItem(itemId);
+      return;
+    }
+    try {
+      setSyncing(true);
+      await apiClient.put(`/cart/items/${itemId}`, {
+        product_id: itemId,
+        quantity: newQuantity,
+      });
+      updateQuantity(itemId, newQuantity);
+    } catch (err) {
+      toast.error(err.message || 'Failed to update quantity');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleRemoveItem = async (itemId) => {
+    try {
+      setSyncing(true);
+      await apiClient.delete(`/cart/items/${itemId}`);
+      removeFromCart(itemId);
+    } catch (err) {
+      toast.error(err.message || 'Failed to remove item');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleClearCart = async () => {
+    try {
+      setSyncing(true);
+      await apiClient.delete('/cart');
+      clearCart();
+      toast.success('Cart cleared');
+    } catch (err) {
+      toast.error(err.message || 'Failed to clear cart');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const handleCheckout = () => {
     if (!cartItems.length) {
       toast.error('Your cart is empty. Add produce before checkout.');
@@ -46,6 +129,48 @@ export const CartPage = () => {
   };
 
   const roundedTotal = Math.max(totalAmount, 0).toFixed(2);
+
+  if (loading) {
+    return (
+      <div className="cart-page">
+        <div className="cart-page-header glass-panel">
+          <div>
+            <span className="section-tag">Shopping Cart</span>
+            <h1 className="cart-heading">Review your farm produce order</h1>
+          </div>
+        </div>
+        <div className="cart-grid">
+          <div className="cart-items-panel glass-panel">
+            <div className="cart-items-list">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="cart-item-row">
+                  <Skeleton height="80px" width="80px" borderRadius="var(--radius-md)" />
+                  <div style={{ flex: 1 }}>
+                    <Skeleton height="16px" width="60%" className="mb-2" />
+                    <Skeleton height="14px" width="40%" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="cart-page">
+        <div className="cart-page-header glass-panel">
+          <div>
+            <span className="section-tag">Shopping Cart</span>
+            <h1 className="cart-heading">Review your farm produce order</h1>
+          </div>
+        </div>
+        <ErrorState message={error} onRetry={() => window.location.reload()} />
+      </div>
+    );
+  }
 
   return (
     <div className="cart-page">
@@ -77,7 +202,7 @@ export const CartPage = () => {
                 <h2 className="section-title-sm">Cart Items</h2>
                 <p className="text-muted">Manage your selected produce and make updates instantly.</p>
               </div>
-              <Button variant="outline" size="sm" onClick={clearCart}>
+              <Button variant="outline" size="sm" onClick={handleClearCart} isLoading={syncing}>
                 Clear Cart
               </Button>
             </div>
@@ -91,21 +216,21 @@ export const CartPage = () => {
                     <p className="text-muted">{item.farm}</p>
                     <div className="cart-item-meta">
                       <span>{formatCurrency(item.price)} / {item.unit}</span>
-                      <span>{item.stock} available</span>
+                      <span>{item.quantity} in cart</span>
                     </div>
                   </div>
                   <div className="cart-item-actions">
                     <div className="quantity-control">
-                      <button type="button" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
+                      <button type="button" onClick={() => handleQuantityChange(item.id, item.quantity - 1)} disabled={syncing}>
                         <FiMinus />
                       </button>
                       <span>{item.quantity}</span>
-                      <button type="button" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
+                      <button type="button" onClick={() => handleQuantityChange(item.id, item.quantity + 1)} disabled={syncing}>
                         <FiPlus />
                       </button>
                     </div>
                     <div className="item-subtotal">{formatCurrency(item.price * item.quantity)}</div>
-                    <button className="remove-item-btn" onClick={() => removeFromCart(item.id)}>
+                    <button className="remove-item-btn" onClick={() => handleRemoveItem(item.id)} disabled={syncing}>
                       <FiTrash2 /> Remove
                     </button>
                   </div>
@@ -153,11 +278,11 @@ export const CartPage = () => {
               </div>
               <div className="price-row grand-total-row">
                 <span>Total</span>
-                <strong>{formatCurrency(Number(roundedTotal))}</strong>
+                <strong>{formatCurrency(Math.max(totalAmount, 0))}</strong>
               </div>
             </div>
 
-            <Button variant="primary" size="lg" fullWidth onClick={handleCheckout}>
+            <Button variant="primary" size="lg" fullWidth onClick={handleCheckout} disabled={syncing}>
               Checkout Now
             </Button>
             <p className="checkout-note text-muted">Secure payment, eco-friendly delivery, and fresh farm packing included.</p>
