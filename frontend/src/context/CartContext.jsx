@@ -18,16 +18,22 @@ export const CartProvider = ({ children }) => {
   }, [cartItems]);
 
   const addToCart = (product, quantity = 1) => {
+    const cartProduct = {
+      ...product,
+      product_id: product.product_id || product.id,
+      quantity,
+    };
+
     setCartItems((prevItems) => {
-      const existingIndex = prevItems.findIndex((item) => item.id === product.id);
+      const existingIndex = prevItems.findIndex((item) => item.product_id === cartProduct.product_id);
       if (existingIndex > -1) {
         const updated = [...prevItems];
         updated[existingIndex].quantity += quantity;
-        toast.info(`Updated ${product.title} quantity in cart!`, { autoClose: 2000 });
+        toast.info(`Updated ${product.title || product.name} quantity in cart!`, { autoClose: 2000 });
         return updated;
       } else {
-        toast.success(`Added ${product.title} to your fresh cart!`, { autoClose: 2000 });
-        return [...prevItems, { ...product, quantity }];
+        toast.success(`Added ${product.title || product.name} to your fresh cart!`, { autoClose: 2000 });
+        return [...prevItems, cartProduct];
       }
     });
   };
@@ -71,8 +77,9 @@ export const CartProvider = ({ children }) => {
         removeFromCart,
         updateQuantity,
         clearCart,
+        setCartItems,
         cartCount,
-        cartSubtotal
+        cartSubtotal,
       }}
     >
       {children}

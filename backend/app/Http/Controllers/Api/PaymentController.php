@@ -13,6 +13,7 @@ use App\Services\FlutterwaveService;
 use App\Services\PaystackService;
 use App\Services\PaymentServiceInterface;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use InvalidArgumentException;
 
@@ -59,7 +60,11 @@ class PaymentController extends Controller
         }
 
         try {
-            $result = $this->service->initialize($order, $validated['email']);
+            $result = $this->service->initialize(
+                $order,
+                $validated['email'],
+                $validated['callback_url'] ?? null
+            );
 
             return response()->json([
                 'success' => true,
@@ -101,7 +106,10 @@ class PaymentController extends Controller
             return response()->json([
                 'success' => $result['status'] === 'success',
                 'message' => $message,
-                'data' => $result,
+                'data' => [
+                    'payment' => new PaymentResource($payment->load('order')),
+                    'verification' => $result,
+                ],
             ]);
         } catch (\Throwable $e) {
             return response()->json([

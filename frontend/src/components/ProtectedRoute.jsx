@@ -26,7 +26,7 @@ export default function ProtectedRoute({
   );
 
   if (!hasAccess) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return children;

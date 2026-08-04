@@ -18,6 +18,7 @@ class Order extends Model
         'subtotal',
         'tax',
         'shipping_cost',
+        'delivery_method',
         'total',
         'shipping_address',
         'notes',
@@ -46,5 +47,10 @@ class Order extends Model
     public function statusHistory(): HasMany
     {
         return $this->hasMany(OrderStatusHistory::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
     }
 }

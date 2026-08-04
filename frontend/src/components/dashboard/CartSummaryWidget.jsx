@@ -1,10 +1,12 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { formatCurrency } from '../../utils/formatters';
 import { Button } from '../common/Button';
 import { FiShoppingBag, FiArrowRight, FiTruck, FiShield } from 'react-icons/fi';
 
 export const CartSummaryWidget = () => {
+  const navigate = useNavigate();
   const { cartItems, cartCount, cartSubtotal, removeFromCart } = useCart();
   const deliveryFee = cartSubtotal > 35 || cartSubtotal === 0 ? 0 : 4.99;
   const grandTotal = cartSubtotal + deliveryFee;
@@ -66,7 +68,7 @@ export const CartSummaryWidget = () => {
             </div>
           </div>
 
-          <Button variant="primary" size="md" fullWidth icon={FiArrowRight}>
+          <Button variant="primary" size="md" fullWidth icon={FiArrowRight} onClick={() => navigate('/checkout')}>
             Proceed to Checkout
           </Button>
 

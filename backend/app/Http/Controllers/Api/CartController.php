@@ -45,10 +45,32 @@ class CartController extends Controller
             ], 422);
         }
 
-        $cartItem = CartItem::updateOrCreate(
-            ['cart_id' => $cart->id, 'product_id' => $product->id],
-            ['quantity' => $validated['quantity'], 'unit_price' => $product->price]
-        );
+        $cartItem = CartItem::where('cart_id', $cart->id)
+            ->where('product_id', $product->id)
+            ->first();
+
+        if ($cartItem) {
+            $quantity = $cartItem->quantity + $validated['quantity'];
+            if ($product->quantity_available < $quantity) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Requested quantity exceeds available stock.',
+                    'available' => $product->quantity_available,
+                ], 422);
+            }
+
+            $cartItem->update([
+                'quantity' => $quantity,
+                'unit_price' => $product->price,
+            ]);
+        } else {
+            $cartItem = CartItem::create([
+                'cart_id' => $cart->id,
+                'product_id' => $product->id,
+                'quantity' => $validated['quantity'],
+                'unit_price' => $product->price,
+            ]);
+        }
 
         return response()->json([
             'success' => true,

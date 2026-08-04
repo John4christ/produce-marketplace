@@ -17,6 +17,7 @@ class InitializePaymentRequest extends FormRequest
         return [
             'order_id' => ['required', 'integer', 'exists:orders,id'],
             'email' => ['required', 'string', 'email', 'max:255'],
+            'callback_url' => ['nullable', 'string', 'url'],
         ];
     }
 }

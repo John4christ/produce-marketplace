@@ -21,6 +21,7 @@ import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
 import { isValidEmail } from "../utils/validators";
 import { sanitizeInput } from "../utils/sanitize";
+import { resizeImage } from "../utils/resizeImage";
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
@@ -36,6 +37,8 @@ export const RegisterPage = () => {
     agreedToTerms: false,
   });
 
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -100,6 +103,19 @@ export const RegisterPage = () => {
     }));
   };
 
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const resized = await resizeImage(file, 400, 0.9);
+      setAvatarFile(resized.file);
+      setAvatarPreview(resized.preview);
+    } catch (err) {
+      toast.error('Failed to process image. Please try another file.');
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value, checked, type } = e.target;
 
@@ -148,51 +164,53 @@ export const RegisterPage = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!validateForm()) {
-    toast.error("Please resolve the errors.");
-    return;
-  }
+    if (!validateForm()) {
+      toast.error("Please resolve the errors.");
+      return;
+    }
 
-  setIsLoading(true);
+    setIsLoading(true);
 
-  try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_BASE_URL}/auth/register`,
-      {
-        name: formData.fullName,
-        email: formData.email,
-        password: formData.password,
-        password_confirmation: formData.confirmPassword,
-        role: formData.userType,
+    try {
+      const payload = new FormData();
+      payload.append('name', formData.fullName);
+      payload.append('email', formData.email);
+      payload.append('password', formData.password);
+      payload.append('password_confirmation', formData.confirmPassword);
+      payload.append('role', formData.userType);
+      if (avatarFile) {
+        payload.append('avatar', avatarFile);
       }
-    );
 
-    const user = response.data.data.user;
-    const token = response.data.data.token;
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/auth/register`,
+        payload
+      );
 
-    login(user, token);
+      const user = response.data.data.user;
+      const token = response.data.data.token;
 
-    toast.success("Registration successful!");
+      login(user, token);
 
-    if (user.roles.includes("farmer")) {
-      navigate("/farmer-dashboard");
-    } else {
-      navigate("/dashboard");
+      toast.success("Registration successful!");
+
+      if (user.roles.includes("farmer")) {
+        navigate("/farmer-dashboard");
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      if (error.response) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Unable to connect to the server.");
+      }
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    if (error.response) {
-      toast.error(error.response.data.message);
-
-      console.log(error.response.data);
-    } else {
-      toast.error("Unable to connect to the server.");
-    }
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
   return (
   <div className="auth-page">
     <div className="auth-container register-container">
@@ -333,7 +351,38 @@ export const RegisterPage = () => {
 
             </div>
           </div>
-                    {/* Full Name */}
+
+          {/* Avatar Upload */}
+          <div className="input-group">
+            <label className="input-label">Profile Picture (optional)</label>
+            <div className="avatar-upload-row">
+              <div className="avatar-preview">
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Avatar preview" />
+                ) : (
+                  <div className="avatar-placeholder">
+                    <FiUser />
+                  </div>
+                )}
+              </div>
+              <div className="avatar-upload-controls">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleAvatarChange}
+                  className="file-input"
+                  id="avatar-upload"
+                />
+                <label htmlFor="avatar-upload" className="btn btn-outline btn-sm">
+                  Choose Image
+                </label>
+                <p className="text-muted text-sm">JPG, PNG or WebP. Max 2MB. Square images work best.</p>
+                {errors.avatar && <span className="input-error-msg">{errors.avatar}</span>}
+              </div>
+            </div>
+          </div>
+
+          {/* Full Name */}
           <Input
             label="Full Name"
             type="text"
@@ -515,6 +564,44 @@ export const RegisterPage = () => {
           >
             Create Account
           </Button>
+
+          <div className="auth-divider">
+            <span>or continue with</span>
+          </div>
+
+          <div className="social-login-grid">
+            <Button
+              type="button"
+              variant="outline"
+              size="md"
+              fullWidth
+              onClick={() => {
+                window.location.href = `${import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, '')}/auth/google/redirect`;
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" style={{ marginRight: '8px' }}>
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.3v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-1 7.28-2.69l-3.57-2.77c-.99.66-2.25 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.84z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l2.85 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              Google
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="md"
+              fullWidth
+              onClick={() => {
+                window.location.href = `${import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, '')}/auth/facebook/redirect`;
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" style={{ marginRight: '8px' }}>
+                <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+              </svg>
+              Facebook
+            </Button>
+          </div>
 
         </form>
 

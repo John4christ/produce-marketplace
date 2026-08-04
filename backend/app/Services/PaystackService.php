@@ -84,7 +84,7 @@ class PaystackService implements PaymentServiceInterface
         ]);
 
         if ($status === 'success') {
-            $this->updateOrderStatus($payment->order, 'processing');
+            $this->updateOrderStatus($payment->order, 'paid');
         }
 
         return [
@@ -146,7 +146,10 @@ class PaystackService implements PaymentServiceInterface
     protected function updateOrderStatus(Order $order, string $status): void
     {
         if ($order->status !== 'paid' && $order->status !== 'processing') {
-            $order->update(['status' => $status]);
+            $order->update([
+                'status' => $status,
+                'paid_at' => $status === 'paid' ? now() : $order->paid_at,
+            ]);
 
             \App\Models\OrderStatusHistory::create([
                 'order_id' => $order->id,

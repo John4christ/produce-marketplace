@@ -15,7 +15,9 @@ use App\Models\OrderStatusHistory;
 use App\Models\Product;
 use App\Policies\OrderPolicy;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class OrderController extends Controller
@@ -60,17 +62,24 @@ class OrderController extends Controller
             ], 422);
         }
 
+        $shippingCost = match ($validated['delivery_method']) {
+            'express' => 8.99,
+            'pickup' => 0.00,
+            default => 4.99,
+        };
+
         $subtotal = 0;
         $orderItems = [];
 
         foreach ($cart->items as $cartItem) {
             $product = $cartItem->product;
 
-            if ($product->status !== 'published') {
+            if (!$product || $product->status !== 'published') {
+                $productName = $product?->name ?? 'Item';
                 return response()->json([
                     'success' => false,
-                    'message' => "Product '{$product->name}' is no longer available.",
-                    'product_id' => $product->id,
+                    'message' => "Product '{$productName}' is no longer available.",
+                    'product_id' => $cartItem->product_id,
                 ], 422);
             }
 
@@ -99,56 +108,60 @@ class OrderController extends Controller
             ];
         }
 
-        $tax = $subtotal * 0.0;
-        $shippingCost = 0;
+        $tax = 0.00;
         $total = $subtotal + $tax + $shippingCost;
 
-        $order = Order::create([
-            'order_number' => 'ORD-' . strtoupper(Str::random(10)),
-            'user_id' => $user->id,
-            'status' => 'pending',
-            'subtotal' => $subtotal,
-            'tax' => $tax,
-            'shipping_cost' => $shippingCost,
-            'total' => $total,
-            'shipping_address' => $validated['shipping_address'],
-            'notes' => $validated['notes'] ?? null,
-        ]);
+        return DB::transaction(function () use ($cart, $user, $validated, $shippingCost, $subtotal, $tax, $total, $orderItems) {
+            $order = Order::create([
+                'order_number' => 'ORD-' . strtoupper(Str::random(10)),
+                'user_id' => $user->id,
+                'status' => 'pending',
+                'delivery_method' => $validated['delivery_method'],
+                'subtotal' => $subtotal,
+                'tax' => $tax,
+                'shipping_cost' => $shippingCost,
+                'total' => $total,
+                'shipping_address' => $validated['shipping_address'],
+                'notes' => $validated['notes'] ?? null,
+            ]);
 
-        foreach ($orderItems as $orderItem) {
-            $orderItem['order_id'] = $order->id;
-            OrderItem::create($orderItem);
-        }
+            foreach ($orderItems as $orderItem) {
+                $orderItem['order_id'] = $order->id;
+                OrderItem::create($orderItem);
+            }
 
-        OrderStatusHistory::create([
-            'order_id' => $order->id,
-            'status' => 'pending',
-            'notes' => 'Order placed successfully.',
-            'created_by' => $user->id,
-        ]);
+            OrderStatusHistory::create([
+                'order_id' => $order->id,
+                'status' => 'pending',
+                'notes' => 'Order placed successfully.',
+                'created_by' => $user->id,
+            ]);
 
-        foreach ($cart->items as $cartItem) {
-            $product = $cartItem->product;
-            $product->decrement('quantity_available', $cartItem->quantity);
-        }
+            foreach ($cart->items as $cartItem) {
+                $product = $cartItem->product;
+                $product->decrement('quantity_available', $cartItem->quantity);
+            }
 
-        $cart->items()->delete();
+            $cart->items()->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Order placed successfully.',
-            'data' => new OrderResource($order->load('items.product', 'items.farmer', 'statusHistory.creator')),
-        ], 201);
+            return response()->json([
+                'success' => true,
+                'message' => 'Order placed successfully.',
+                'data' => new OrderResource($order->load('items.product', 'items.farmer', 'statusHistory.creator', 'payments')),
+            ], 201);
+        });
     }
 
     public function show(Order $order): JsonResponse
     {
         $user = Auth::user();
 
-        if ($user->hasRole('admin') || $user->id === $order->user_id) {
+        $canViewAsFarmer = $user->hasRole('farmer') && $order->items()->where('farmer_id', $user->id)->exists();
+
+        if ($user->hasRole('admin') || $user->id === $order->user_id || $canViewAsFarmer) {
             return response()->json([
                 'success' => true,
-                'data' => new OrderResource($order->load('items.product.farmer', 'items.farmer', 'statusHistory.creator')),
+                'data' => new OrderResource($order->load('items.product.farmer', 'items.farmer', 'statusHistory.creator', 'payments')),
             ]);
         }
 

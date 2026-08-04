@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\Cart;
+use App\Models\Order;
+use App\Models\Payment;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -20,6 +23,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'avatar',
     ];
 
     protected $hidden = [
@@ -44,14 +48,30 @@ class User extends Authenticatable
     {
         return $this->hasMany(Product::class, 'farmer_id');
     }
-    public function hasRole($roles)
-{
-    if (is_string($roles)) {
-        $roles = explode('|', $roles);
+
+    public function cart()
+    {
+        return $this->hasOne(Cart::class);
     }
 
-    return $this->roles()
-        ->whereIn('slug', $roles)
-        ->exists();
-}
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function hasRole($roles)
+    {
+        if (is_string($roles)) {
+            $roles = explode('|', $roles);
+        }
+
+        return $this->roles()
+            ->whereIn('slug', $roles)
+            ->exists();
+    }
 }

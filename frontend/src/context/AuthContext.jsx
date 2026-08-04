@@ -1,5 +1,4 @@
-
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import axios from "axios";
 const AuthContext = createContext();
 
@@ -22,7 +21,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = (userData, token) => {
+  const login = useCallback((userData, token) => {
     const normalizedUser = {
       ...userData,
       roles: Array.isArray(userData.roles) ? userData.roles : userData.role ? [userData.role] : ['buyer'],
@@ -31,9 +30,18 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(true);
     sessionStorage.setItem("agri_auth_token", token);
     sessionStorage.setItem("agri_user", JSON.stringify(normalizedUser));
-  };
+  }, []);
 
-  const logout = async () => {
+  const updateUser = useCallback((userData) => {
+    const normalizedUser = {
+      ...userData,
+      roles: Array.isArray(userData.roles) ? userData.roles : userData.role ? [userData.role] : ['buyer'],
+    };
+    setUser(normalizedUser);
+    sessionStorage.setItem("agri_user", JSON.stringify(normalizedUser));
+  }, []);
+
+  const logout = useCallback(async () => {
     try {
       const token = sessionStorage.getItem("agri_auth_token");
       if (token) {
@@ -51,10 +59,10 @@ export const AuthProvider = ({ children }) => {
       sessionStorage.removeItem("agri_auth_token");
       sessionStorage.removeItem("agri_user");
     }
-  };
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

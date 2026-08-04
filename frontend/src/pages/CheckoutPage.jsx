@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiCheckCircle, FiRefreshCw } from 'react-icons/fi';
+import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { apiClient } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
@@ -12,6 +13,7 @@ import { toast } from 'react-toastify';
 export const CheckoutPage = () => {
   const navigate = useNavigate();
   const { cartItems, cartSubtotal, clearCart } = useCart();
+  const { user } = useAuth();
   const [coupon, setCoupon] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [deliveryMethod, setDeliveryMethod] = useState('standard');
@@ -49,12 +51,21 @@ export const CheckoutPage = () => {
         const backendCart = backendCartResponse?.data || backendCartResponse;
         const backendItems = backendCart?.items || [];
 
-        const backendProductIds = new Set(backendItems.map((item) => item.product_id));
+        const backendItemMap = new Map(backendItems.map((item) => [item.product_id, item]));
 
         for (const item of cartItems) {
-          if (!backendProductIds.has(item.id)) {
+          const productId = item.product_id || item.id;
+          const existing = backendItemMap.get(productId);
+          if (existing) {
+            if (existing.quantity !== item.quantity) {
+              await apiClient.put(`/cart/items/${existing.id}`, {
+                product_id: productId,
+                quantity: item.quantity,
+              });
+            }
+          } else {
             await apiClient.post('/cart/items', {
-              product_id: item.id,
+              product_id: productId,
               quantity: item.quantity,
             });
           }
@@ -109,13 +120,33 @@ export const CheckoutPage = () => {
     try {
       const orderData = {
         shipping_address: shippingAddress,
-        notes: `Delivery method: ${deliveryMethod}. Payment method: ${paymentMethod}.${appliedCoupon ? ` Coupon: ${appliedCoupon.code}.` : ''}`,
+        delivery_method: deliveryMethod,
+        notes: `Payment method: ${paymentMethod}.${appliedCoupon ? ` Coupon: ${appliedCoupon.code}.` : ''}`,
       };
 
-      await apiClient.post('/orders', orderData);
-      clearCart();
-      toast.success('Order placed successfully!');
-      navigate('/dashboard');
+      const orderResponse = await apiClient.post('/orders', orderData);
+      const order = orderResponse?.data || orderResponse;
+
+      if (paymentMethod === 'cod') {
+        clearCart();
+        toast.success('Order placed successfully. Please pay on delivery.');
+        navigate('/orders');
+        return;
+      }
+
+      const callbackUrl = `${window.location.origin}/payment/callback`;
+      const paymentResponse = await apiClient.post('/payments/initialize', {
+        order_id: order.id,
+        email: user?.email || '',
+        callback_url: callbackUrl,
+      });
+
+      const payment = paymentResponse?.data || paymentResponse;
+      if (payment?.authorization_url) {
+        window.location.href = payment.authorization_url;
+      } else {
+        toast.error('Unable to initialize payment.');
+      }
     } catch (err) {
       toast.error(err.message || 'Failed to place order. Please try again.');
     } finally {
@@ -170,6 +201,24 @@ export const CheckoutPage = () => {
 
       <div className="checkout-grid">
         <section className="checkout-form-panel glass-panel">
+          <div className="checkout-section">
+            <div className="section-head">
+              <h2>Customer Information</h2>
+              <p className="text-muted">Confirm your contact details before checkout.</p>
+            </div>
+
+            <div className="customer-info-grid">
+              <div>
+                <label>Name</label>
+                <input type="text" value={user?.name || ''} disabled />
+              </div>
+              <div>
+                <label>Email</label>
+                <input type="text" value={user?.email || ''} disabled />
+              </div>
+            </div>
+          </div>
+
           <div className="checkout-section">
             <div className="section-head">
               <h2>Shipping Address</h2>
@@ -340,9 +389,12 @@ export const CheckoutPage = () => {
           <div className="summary-items-list">
             {cartItems.map((item) => (
               <div key={item.id} className="summary-item-row">
-                <div>
-                  <strong>{item.title}</strong>
-                  <p className="text-muted">{item.quantity} × {formatCurrency(item.price)}</p>
+                <div className="summary-item-product">
+                  <img src={item.image} alt={item.title} className="summary-item-image" />
+                  <div>
+                    <strong>{item.title}</strong>
+                    <p className="text-muted">{item.quantity} × {formatCurrency(item.price)}</p>
+                  </div>
                 </div>
                 <span>{formatCurrency(item.price * item.quantity)}</span>
               </div>

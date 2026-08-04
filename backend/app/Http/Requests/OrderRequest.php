@@ -22,6 +22,7 @@ class OrderRequest extends FormRequest
             'shipping_address.postal_code' => ['required', 'string', 'max:20'],
             'shipping_address.country' => ['required', 'string', 'max:100'],
             'shipping_address.phone' => ['nullable', 'string', 'max:20'],
+            'delivery_method' => ['required', 'string', 'in:standard,express,pickup'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];
     }

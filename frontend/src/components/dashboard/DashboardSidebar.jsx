@@ -16,7 +16,7 @@ import { TbLeaf } from 'react-icons/tb';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 
-export const DashboardSidebar = ({ isCollapsed, onToggleCollapse, wishlistCount = 0 }) => {
+export const DashboardSidebar = ({ isCollapsed, onToggleCollapse, wishlistCount = 0, ordersCount, notificationsCount }) => {
   const location = useLocation();
   const { logout, user } = useAuth();
   const { cartCount } = useCart();
@@ -24,9 +24,9 @@ export const DashboardSidebar = ({ isCollapsed, onToggleCollapse, wishlistCount 
   const navItems = [
     { label: 'Overview', icon: FiGrid, path: '/dashboard', badge: null },
     { label: 'Fresh Catalog', icon: FiShoppingBag, path: '/catalog', badge: null },
-    { label: 'My Orders', icon: FiPackage, path: '/orders', badge: '2' },
+    { label: 'My Orders', icon: FiPackage, path: '/orders', badge: ordersCount > 0 ? ordersCount : null },
     { label: 'Saved Wishlist', icon: FiHeart, path: '/wishlist', badge: wishlistCount > 0 ? wishlistCount : null },
-    { label: 'Notifications', icon: FiBell, path: '/notifications', badge: '3' },
+    { label: 'Notifications', icon: FiBell, path: '/notifications', badge: notificationsCount > 0 ? notificationsCount : null },
     { label: 'Account Settings', icon: FiSettings, path: '/settings', badge: null }
   ];
 

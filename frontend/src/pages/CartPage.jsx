@@ -41,7 +41,8 @@ export const CartPage = () => {
         const mappedItems = items.map((item) => {
           const product = item.product || {};
           return {
-            id: item.id || product.id,
+            id: item.id,
+            product_id: product.id,
             title: product.name || 'Unknown Product',
             price: Number(item.unit_price || product.price || 0),
             unit: product.unit || 'unit',
@@ -81,10 +82,17 @@ export const CartPage = () => {
       await handleRemoveItem(itemId);
       return;
     }
+
+    const item = cartItems.find((cartItem) => cartItem.id === itemId || cartItem.product_id === itemId);
+    if (!item) {
+      toast.error('Unable to update this cart item.');
+      return;
+    }
+
     try {
       setSyncing(true);
       await apiClient.put(`/cart/items/${itemId}`, {
-        product_id: itemId,
+        product_id: item.product_id || item.id,
         quantity: newQuantity,
       });
       updateQuantity(itemId, newQuantity);

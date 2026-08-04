@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\PaymentResource;
 
 class OrderResource extends JsonResource
 {
@@ -13,6 +14,7 @@ class OrderResource extends JsonResource
             'id' => $this->id,
             'order_number' => $this->order_number,
             'status' => $this->status,
+            'delivery_method' => $this->delivery_method,
             'subtotal' => $this->subtotal,
             'tax' => $this->tax,
             'shipping_cost' => $this->shipping_cost,
@@ -27,6 +29,7 @@ class OrderResource extends JsonResource
             ]),
             'items' => OrderItemResource::collection($this->whenLoaded('items')),
             'status_history' => $this->whenLoaded('statusHistory', fn () => OrderStatusHistoryResource::collection($this->statusHistory)),
+            'payments' => $this->whenLoaded('payments', fn () => PaymentResource::collection($this->payments)),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

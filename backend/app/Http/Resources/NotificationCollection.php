@@ -10,19 +10,19 @@ class NotificationCollection extends ResourceCollection
     public function toArray(Request $request): array
     {
         return [
-            'data' => $this->collection,
+            'data' => NotificationResource::collection($this->collection)->toArray($request),
             'meta' => [
-                'current_page' => $this->collection->currentPage(),
-                'last_page' => $this->collection->lastPage(),
-                'per_page' => $this->collection->perPage(),
-                'total' => $this->collection->total(),
+                'current_page' => $this->resource->currentPage(),
+                'last_page' => $this->resource->lastPage(),
+                'per_page' => $this->resource->perPage(),
+                'total' => $this->resource->total(),
                 'unread_count' => $this->collection->reject(fn ($notification) => !is_null($notification->read_at))->count(),
             ],
             'links' => [
-                'first' => $this->collection->url(1),
-                'last' => $this->collection->url($this->collection->lastPage()),
-                'prev' => $this->collection->previousPageUrl(),
-                'next' => $this->collection->nextPageUrl(),
+                'first' => $this->resource->url(1),
+                'last' => $this->resource->url($this->resource->lastPage()),
+                'prev' => $this->resource->previousPageUrl(),
+                'next' => $this->resource->nextPageUrl(),
             ],
         ];
     }

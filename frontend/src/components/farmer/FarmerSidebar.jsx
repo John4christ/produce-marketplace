@@ -15,14 +15,14 @@ import {
 import { TbLeaf, TbTractor } from 'react-icons/tb';
 import { useAuth } from '../../context/AuthContext';
 
-export const FarmerSidebar = ({ isCollapsed, onToggleCollapse, onOpenAddModal }) => {
+export const FarmerSidebar = ({ isCollapsed, onToggleCollapse, onOpenAddModal, cropsCount, ordersCount }) => {
   const location = useLocation();
   const { logout, user } = useAuth();
 
   const navItems = [
     { label: 'Farm Overview', icon: FiGrid, path: '/farmer-dashboard', badge: null },
-    { label: 'Crops & Inventory', icon: TbTractor, path: '/farmer/crops', badge: '6' },
-    { label: 'Orders to Fulfill', icon: FiPackage, path: '/farmer/orders', badge: '3' },
+    { label: 'Crops & Inventory', icon: TbTractor, path: '/farmer/crops', badge: cropsCount > 0 ? cropsCount : null },
+    { label: 'Orders to Fulfill', icon: FiPackage, path: '/farmer/orders', badge: ordersCount > 0 ? ordersCount : null },
     { label: 'Sales & Revenue', icon: FiTrendingUp, path: '/farmer/analytics', badge: null },
     { label: 'Payouts & Wallet', icon: FiDollarSign, path: '/farmer/wallet', badge: null },
     { label: 'Farm Profile', icon: FiSettings, path: '/farmer/profile', badge: null }

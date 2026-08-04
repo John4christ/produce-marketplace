@@ -9,8 +9,6 @@ class ProductCollection extends ResourceCollection
 {
     public function toArray(Request $request): array
     {
-        return [
-            'data' => ProductResource::collection($this->collection),
-        ];
+        return ProductResource::collection($this->collection)->toArray($request);
     }
 }

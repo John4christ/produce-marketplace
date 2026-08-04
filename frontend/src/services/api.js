@@ -6,8 +6,7 @@ const api = axios.create({
   baseURL,
   timeout: 15000,
   headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
+    Accept: 'application/json'
   }
 });
 
@@ -26,22 +25,28 @@ api.interceptors.response.use(
   (response) => response.data,
   (error) => {
     let message = 'An unexpected error occurred. Please try again.';
-    if (error.response) {
-      if (error.response.status === 401) {
-        message = 'Session expired. Please log in again.';
-        sessionStorage.removeItem('agri_auth_token');
-        sessionStorage.removeItem('agri_user');
-      } else if (error.response.status === 403) {
-        message = 'You do not have permission to perform this action.';
-      } else if (error.response.data && error.response.data.message) {
-        message = error.response.data.message;
-      } else if (typeof error.response.data === 'string') {
-        message = error.response.data;
-      }
+    const status = error.response?.status;
+    const data = error.response?.data;
+
+    if (status === 401) {
+      message = 'Session expired. Please log in again.';
+      sessionStorage.removeItem('agri_auth_token');
+      sessionStorage.removeItem('agri_user');
+    } else if (status === 403) {
+      message = 'You do not have permission to perform this action.';
+    } else if (data?.message) {
+      message = data.message;
+    } else if (typeof data === 'string') {
+      message = data;
     } else if (error.request) {
       message = 'Network error. Please check your internet connection.';
     }
-    return Promise.reject(new Error(message));
+
+    const enhancedError = new Error(message);
+    enhancedError.status = status;
+    enhancedError.errors = data?.errors || null;
+    enhancedError.originalData = data;
+    return Promise.reject(enhancedError);
   }
 );
 

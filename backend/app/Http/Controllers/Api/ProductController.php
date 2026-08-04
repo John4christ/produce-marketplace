@@ -21,31 +21,38 @@ class ProductController extends Controller
     {
         $query = Product::query()
             ->with(['farmer', 'category', 'images'])
-            ->when($request->filled('search'), function ($query, $search) {
-                $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->input('search');
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('description', 'like', "%{$search}%");
+                });
             })
-            ->when($request->filled('category_id'), function ($query, $categoryId) {
-                $query->where('category_id', $categoryId);
+            ->when($request->filled('category_id'), function ($query) use ($request) {
+                $query->where('category_id', $request->input('category_id'));
             })
-            ->when($request->filled('farmer_id'), function ($query, $farmerId) {
-                $query->where('farmer_id', $farmerId);
+            ->when($request->filled('farmer_id'), function ($query) use ($request) {
+                $query->where('farmer_id', $request->input('farmer_id'));
             })
-            ->when($request->filled('min_price'), function ($query, $minPrice) {
-                $query->where('price', '>=', $minPrice);
+            ->when($request->filled('min_price'), function ($query) use ($request) {
+                $query->where('price', '>=', $request->input('min_price'));
             })
-            ->when($request->filled('max_price'), function ($query, $maxPrice) {
-                $query->where('price', '<=', $maxPrice);
+            ->when($request->filled('max_price'), function ($query) use ($request) {
+                $query->where('price', '<=', $request->input('max_price'));
             })
-            ->when($request->filled('status'), function ($query, $status) {
-                $query->where('status', $status);
+            ->when($request->filled('status'), function ($query) use ($request) {
+                $query->where('status', $request->input('status'));
             })
-            ->when($request->filled('unit'), function ($query, $unit) {
-                $query->where('unit', $unit);
+            ->when($request->filled('unit'), function ($query) use ($request) {
+                $query->where('unit', $request->input('unit'));
             })
             ->when($request->boolean('my_products'), function ($query) {
                 $query->where('farmer_id', Auth::id());
             });
+
+        if (!$request->filled('status') && (!$request->user() || (!$request->user()->hasRole('farmer') && !$request->user()->hasRole('admin')))) {
+            $query->where('status', 'published');
+        }
 
         $perPage = $request->integer('per_page', 15);
         $products = $query->orderByDesc('created_at')->paginate($perPage);
@@ -61,6 +68,7 @@ class ProductController extends Controller
         $validated = $request->validated();
 
         $validated['farmer_id'] = $request->user()->id;
+        $validated['status'] = $validated['status'] ?? 'published';
 
         $product = Product::create($validated);
 

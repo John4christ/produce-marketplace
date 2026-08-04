@@ -24,7 +24,6 @@ export const LoginPage = () => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [socialLoading, setSocialLoading] = useState(null); // 'google' | 'facebook' | null
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -76,10 +75,6 @@ export const LoginPage = () => {
   }
 );
 
-// ADD THESE TWO LINES
-console.log(response.data);
-console.log(response.data.data.user);
-
 const user = response.data.data.user;
 const token = response.data.data.token;
     login(user, token);
@@ -105,20 +100,8 @@ const token = response.data.data.token;
 };
 
   const handleSocialLogin = (provider) => {
-    setSocialLoading(provider);
-    setTimeout(() => {
-      setSocialLoading(null);
-      const mockUserData = {
-        id: `user-${provider}-202`,
-        name: provider === 'google' ? 'Elena Vance' : 'Marcus Vance',
-        email: `user.${provider}@example.com`,
-        role: 'buyer',
-        avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&q=80'
-      };
-      login(mockUserData, `jwt_social_token_${provider}`);
-      toast.success(`Successfully signed in with ${provider === 'google' ? 'Google' : 'Facebook'}!`, { autoClose: 2500 });
-      navigate('/');
-    }, 1500);
+    const backendUrl = import.meta.env.VITE_API_BASE_URL.replace('/api', '');
+    window.location.href = `${backendUrl}/auth/${provider}/redirect`;
   };
 
   return (
@@ -170,22 +153,22 @@ const token = response.data.data.token;
               type="button"
               className="btn btn-social btn-google"
               onClick={() => handleSocialLogin('google')}
-              disabled={isLoading || socialLoading !== null}
+              disabled={isLoading}
               aria-label="Sign in with Google"
             >
               <FcGoogle className="social-icon" />
-              <span>{socialLoading === 'google' ? 'Connecting...' : 'Google'}</span>
+              <span>Google</span>
             </button>
 
             <button
               type="button"
               className="btn btn-social btn-facebook"
               onClick={() => handleSocialLogin('facebook')}
-              disabled={isLoading || socialLoading !== null}
+              disabled={isLoading}
               aria-label="Sign in with Facebook"
             >
               <FaFacebook className="social-icon facebook-blue" />
-              <span>{socialLoading === 'facebook' ? 'Connecting...' : 'Facebook'}</span>
+              <span>Facebook</span>
             </button>
           </div>
 

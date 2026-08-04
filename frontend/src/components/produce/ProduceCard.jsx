@@ -9,9 +9,23 @@ import { formatCurrency } from '../../utils/formatters';
 export const ProduceCard = ({ product }) => {
   const { addToCart } = useCart();
 
+  const image = product.images?.[0]?.url || product.image || '/placeholder.jpg';
+  const title = product.name || product.title || 'Fresh Produce';
+  const farm = product.farmer?.name || product.farm || 'Local Farm';
+  const farmLocation = product.farmer?.location || product.farmLocation || '';
+  const price = product.price;
+  const unit = product.unit || 'kg';
+
   const handleAddToCart = (e) => {
     e.stopPropagation();
-    addToCart(product);
+    addToCart({
+      ...product,
+      title,
+      image,
+      farm,
+      price,
+      unit,
+    });
   };
 
   return (
@@ -19,8 +33,8 @@ export const ProduceCard = ({ product }) => {
       <Link to={`/product/${product.id}`} className="produce-card-link">
         <div className="produce-image-container">
           <img
-            src={product.image}
-            alt={product.title}
+            src={image}
+            alt={title}
             className="produce-image"
             loading="lazy"
           />
@@ -32,28 +46,30 @@ export const ProduceCard = ({ product }) => {
 
         <div className="produce-body">
           <div className="produce-farm-meta">
-            <span className="farm-name">{product.farm}</span>
-            <span className="farm-location">
-              <FiMapPin className="icon-tiny" /> {product.farmLocation}
-            </span>
+            <span className="farm-name">{farm}</span>
+            {farmLocation && (
+              <span className="farm-location">
+                <FiMapPin className="icon-tiny" /> {farmLocation}
+              </span>
+            )}
           </div>
 
-          <h3 className="produce-title">{product.title}</h3>
+          <h3 className="produce-title">{title}</h3>
 
           <div className="produce-rating">
             <div className="stars">
               <FiStar className="star-filled" />
-              <span className="rating-score">{product.rating}</span>
+              <span className="rating-score">{product.rating || '4.5'}</span>
             </div>
-            <span className="reviews-count">({product.reviewsCount} reviews)</span>
+            <span className="reviews-count">({product.reviewsCount || 0} reviews)</span>
           </div>
         </div>
       </Link>
 
       <div className="produce-footer">
         <div className="price-tag">
-          <span className="price-val">{formatCurrency(product.price)}</span>
-          <span className="price-unit">/ {product.unit}</span>
+          <span className="price-val">{formatCurrency(price)}</span>
+          <span className="price-unit">/ {unit}</span>
         </div>
 
         <Button
@@ -61,7 +77,7 @@ export const ProduceCard = ({ product }) => {
           size="sm"
           icon={FiShoppingBag}
           onClick={handleAddToCart}
-          ariaLabel={`Add ${product.title} to cart`}
+          ariaLabel={`Add ${title} to cart`}
         >
           Add
         </Button>

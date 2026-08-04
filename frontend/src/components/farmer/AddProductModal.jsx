@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
 import { toast } from "react-toastify";
 import { Button } from "../common/Button";
 import { Input } from "../common/Input";
+import { resizeImage } from "../../utils/resizeImage";
+import { apiClient } from "../../services/api";
 
 const AddProductModal = ({ isOpen, onClose, onSuccess, editProduct = null }) => {
   const isEdit = !!editProduct;
@@ -27,10 +28,12 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editProduct = null }) => 
     if (isOpen) {
       const fetchCategories = async () => {
         try {
-          const response = await axios.get(
-            `${import.meta.env.VITE_API_BASE_URL}/categories`
-          );
-          setCategories(response.data.data || []);
+          const response = await apiClient.get('/categories', {
+            params: { per_page: 100 },
+          });
+
+          const categoriesData = response?.data || response || [];
+          setCategories(Array.isArray(categoriesData) ? categoriesData : categoriesData?.data || []);
         } catch {
           toast.error("Unable to load categories");
         }
@@ -82,22 +85,29 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editProduct = null }) => 
     }
   }, [errors]);
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        setErrors((prev) => ({ ...prev, image: "Image must not exceed 2MB." }));
-        return;
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      try {
+        const resized = await resizeImage(file, 800, 0.8);
+        setImageFile(resized.file);
+        setImagePreview(resized.preview);
+      } catch (err) {
+        toast.error("Failed to process image. Please try another file.");
       }
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-      if (errors.image) {
-        setErrors((prev) => {
-          const next = { ...prev };
-          delete next.image;
-          return next;
-        });
-      }
+      return;
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+    if (errors.image) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.image;
+        return next;
+      });
     }
   };
 
@@ -119,11 +129,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editProduct = null }) => 
 
     setLoading(true);
     try {
-      const token = sessionStorage.getItem("agri_auth_token");
-      const url = isEdit
-        ? `${import.meta.env.VITE_API_BASE_URL}/products/${editProduct.id}`
-        : `${import.meta.env.VITE_API_BASE_URL}/products`;
-
+      const url = isEdit ? `/products/${editProduct.id}` : "/products";
       const formData = new FormData();
       formData.append("name", form.name);
       formData.append("description", form.description);
@@ -140,24 +146,13 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editProduct = null }) => 
       }
 
       const response = isEdit
-        ? await axios.post(url, formData, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          })
-        : await axios.post(url, formData, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          });
+        ? await apiClient.put(url, formData)
+        : await apiClient.post(url, formData);
 
       toast.success(isEdit ? "Product updated successfully" : "Product added successfully");
       onSuccess?.();
       onClose();
     } catch (err) {
-      console.error(err.response?.data);
       const message =
         err.response?.data?.message ||
         (err.response?.data?.errors
@@ -294,7 +289,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editProduct = null }) => 
               {errors.image && <span className="input-error-msg">{errors.image}</span>}
               {imagePreview && (
                 <div className="image-preview">
-                  <img src={imagePreview} alt="Preview" />
+                  <img key={imagePreview} src={imagePreview} alt="Preview" />
                 </div>
               )}
             </div>

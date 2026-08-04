@@ -111,7 +111,9 @@ button, input, select, textarea {
 
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
+    padding-top: 20px;
+    overflow-y: auto;
 
     z-index: 9999;
 }
@@ -119,6 +121,9 @@ button, input, select, textarea {
 .modal-card {
     width: 550px;
     max-width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    overflow-x: hidden;
 
     background: #171d2d;
     color: white;
@@ -177,4 +182,32 @@ button, input, select, textarea {
     border:1px solid #39445f;
     background:#0f1525;
     color:white;
+}
+
+.image-preview{
+    margin-top:8px;
+    max-width:100%;
+    overflow:hidden;
+    border-radius:8px;
+    border:1px solid #39445f;
+    background:#0f1525;
+}
+.image-preview img{
+    display:block;
+    width:100%;
+    height:auto;
+    max-height:160px;
+    object-fit:cover;
+    object-position:center;
+}
+
+.modal-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:12px;
+    margin-top:8px;
+    position:sticky;
+    bottom:0;
+    background:#171d2d;
+    padding:12px 0 0 0;
 }

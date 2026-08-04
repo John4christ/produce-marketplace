@@ -10,7 +10,6 @@ import { NewsletterSection } from '../components/landing/NewsletterSection';
 import { JoinCommunityCTA } from '../components/landing/JoinCommunityCTA';
 import api from '../services/api';
 import { useScrollAnimation } from '../hooks/useScrollAnimation';
-import { toast } from 'react-toastify';
 
 export const HomePage = () => {
   const [products, setProducts] = useState([]);
@@ -18,79 +17,62 @@ export const HomePage = () => {
   const [error, setError] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
 
-  // Trigger scroll reveal animations
   useScrollAnimation();
-const fetchProduce = async () => {
-  setIsLoading(true);
-  setError(null);
 
-  try {
-    const response = await api.get("/products");
+  const fetchProduce = async () => {
+    setIsLoading(true);
+    setError(null);
 
-console.log("API RESPONSE:", response);
-console.log("response.data:", response.data);
-console.log("response.data.data:", response.data?.data);
-console.log("response.data.data.data:", response.data?.data?.data);
+    try {
+      const response = await api.get('/products', {
+        params: {
+          status: 'published',
+          per_page: 12,
+        },
+      });
 
-if (Array.isArray(response)) {
- setProducts(response.data.data);
-} else if (Array.isArray(response.data)) {
-  setProducts(response.data);
-} else if (Array.isArray(response.data?.data)) {
-  setProducts(response.data.data);
-} else {
-  console.log("UNKNOWN RESPONSE:", response);
-}
-    setIsLoading(false);
-  } catch (err) {
-    console.error(err);
-    setError("Failed to fetch harvest data.");
-    setIsLoading(false);
-  }
-};
+      const productsData = response?.data || response;
+      const items = Array.isArray(productsData) ? productsData : productsData?.data || [];
+      setProducts(items);
+    } catch (err) {
+      setError('Failed to fetch harvest data.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchProduce();
   }, []);
 
   const handleSearchSubmit = (searchTerm) => {
-  if (!searchTerm) {
-    fetchProduce();
-    return;
-  }
+    if (!searchTerm) {
+      fetchProduce();
+      return;
+    }
 
-  const lower = searchTerm.toLowerCase();
+    const lower = searchTerm.toLowerCase();
+    const filtered = products.filter((item) => {
+      const name = item.name?.toLowerCase() || '';
+      const category = item.category?.name?.toLowerCase() || '';
+      return name.includes(lower) || category.includes(lower);
+    });
+    setProducts(filtered);
 
-  const filtered = products.filter(
-    (item) =>
-      item.title.toLowerCase().includes(lower) ||
-      item.category.toLowerCase().includes(lower)
-  );
-
-  setProducts(filtered);
-
-  const elem = document.getElementById("popular-harvest");
-
-  if (elem) {
-    elem.scrollIntoView({ behavior: "smooth" });
-  }
-};
+    const elem = document.getElementById('popular-harvest');
+    if (elem) {
+      elem.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   return (
     <div className="home-page">
-      {/* 1. Hero Section */}
       <HeroSection onSearchSubmit={handleSearchSubmit} />
-
-      {/* 2. Statistics Section */}
       <StatisticsSection />
-
-      {/* 3. Featured Harvest Categories */}
       <FeaturedCategories
         selectedCategory={activeCategory}
         onSelectCategory={(slug) => setActiveCategory(slug)}
       />
-
-      {/* 4. Popular Produce Items (Filterable Grid with Skeleton / Error / Empty States) */}
       <PopularProduce
         products={products}
         isLoading={isLoading}
@@ -99,20 +81,10 @@ if (Array.isArray(response)) {
         onCategoryChange={setActiveCategory}
         onRetry={fetchProduce}
       />
-
-      {/* 5. Why Choose Us (Benefits) */}
       <WhyChooseUs />
-
-      {/* 6. Farmer Showcase */}
       <FarmerShowcase />
-
-      {/* 7. Testimonials */}
       <TestimonialsSection />
-
-      {/* 8. Join Community CTA */}
       <JoinCommunityCTA />
-
-      {/* 9. Newsletter Section */}
       <NewsletterSection />
     </div>
   );

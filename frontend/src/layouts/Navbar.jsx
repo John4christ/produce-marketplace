@@ -26,6 +26,7 @@ export const Navbar = ({ onSearch }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [navSearch, setNavSearch] = useState('');
+  const [avatarError, setAvatarError] = useState(false);
 
   const handleNavSearch = (e) => {
     e.preventDefault();
@@ -39,7 +40,12 @@ export const Navbar = ({ onSearch }) => {
   };
 
   const userRole = user?.roles?.[0]?.slug || 'buyer';
+  const avatarUrl = user?.avatar || null;
   const userInitial = user?.name?.charAt(0)?.toUpperCase() || 'U';
+
+  const handleAvatarError = () => {
+    setAvatarError(true);
+  };
 
   return (
     <header className="navbar-sticky glass-panel">
@@ -99,8 +105,18 @@ export const Navbar = ({ onSearch }) => {
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                 aria-label="User account menu"
               >
-                <div className="user-avatar-tiny" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-primary)', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', fontSize: '14px', fontWeight: 600 }}>
-                  {userInitial}
+                <div className="user-avatar-tiny" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: avatarUrl && !avatarError ? 'transparent' : 'var(--color-primary)', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', fontSize: '14px', fontWeight: 600, overflow: 'hidden' }}>
+                  {avatarUrl && !avatarError ? (
+                    <img
+                      key={avatarUrl}
+                      src={avatarUrl}
+                      alt={user.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={handleAvatarError}
+                    />
+                  ) : (
+                    userInitial
+                  )}
                 </div>
                 <div className="user-meta-desktop">
                   <span className="user-name-sm">{user.name.split(' ')[0]}</span>

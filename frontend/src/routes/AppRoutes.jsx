@@ -10,13 +10,18 @@ import { AdminDashboardPage } from '../pages/AdminDashboardPage';
 import { ProductDetailsPage } from '../pages/ProductDetailsPage';
 import { CartPage } from '../pages/CartPage';
 import { CheckoutPage } from '../pages/CheckoutPage';
-import { useAuth } from '../context/AuthContext';
+import { OrderDetailsPage } from '../pages/OrderDetailsPage';
+import { PaymentCallbackPage } from '../pages/PaymentCallbackPage';
+import { OAuthCallbackPage } from '../pages/OAuthCallbackPage';
 import ProtectedRoute from "../components/ProtectedRoute";
+import { ErrorBoundary } from "../components/ErrorBoundary";
+
 
 
 export const AppRoutes = () => {
   return (
-    <Routes>
+    <ErrorBoundary>
+      <Routes>
       <Route
         path="/"
         element={
@@ -38,6 +43,14 @@ export const AppRoutes = () => {
         element={
           <MainLayout>
             <RegisterPage />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/oauth/callback"
+        element={
+          <MainLayout>
+            <OAuthCallbackPage />
           </MainLayout>
         }
       />
@@ -90,6 +103,102 @@ export const AppRoutes = () => {
         }
       />
       <Route
+        path="/payment/callback"
+        element={
+          <ProtectedRoute allowedRoles={["buyer"]}>
+            <PaymentCallbackPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/orders/:orderId"
+        element={
+          <ProtectedRoute allowedRoles={["buyer"]}>
+            <OrderDetailsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/catalog"
+        element={
+          <ProtectedRoute allowedRoles={["buyer"]}>
+            <BuyerDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/orders"
+        element={
+          <ProtectedRoute allowedRoles={["buyer"]}>
+            <BuyerDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/wishlist"
+        element={
+          <ProtectedRoute allowedRoles={["buyer"]}>
+            <BuyerDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute allowedRoles={["buyer"]}>
+            <BuyerDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute allowedRoles={["buyer"]}>
+            <BuyerDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/farmer/crops"
+        element={
+          <ProtectedRoute allowedRoles={["farmer"]}>
+            <FarmerDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/farmer/orders"
+        element={
+          <ProtectedRoute allowedRoles={["farmer"]}>
+            <FarmerDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/farmer/analytics"
+        element={
+          <ProtectedRoute allowedRoles={["farmer"]}>
+            <FarmerDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/farmer/wallet"
+        element={
+          <ProtectedRoute allowedRoles={["farmer"]}>
+            <FarmerDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/farmer/profile"
+        element={
+          <ProtectedRoute allowedRoles={["farmer"]}>
+            <FarmerDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="*"
         element={
           <MainLayout>
@@ -98,5 +207,6 @@ export const AppRoutes = () => {
         }
       />
     </Routes>
+    </ErrorBoundary>
   );
 };

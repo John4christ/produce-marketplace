@@ -45,6 +45,16 @@ class Product extends Model
         return $this->hasMany(ProductImage::class);
     }
 
+    public function scopePublished($query)
+    {
+        return $query->where('status', 'published');
+    }
+
+    public function scopeForFarmer($query, $farmerId)
+    {
+        return $query->where('farmer_id', $farmerId);
+    }
+
     public function primaryImage(): HasOne
     {
         return $this->hasOne(ProductImage::class)->orderBy('sort_order');

@@ -14,7 +14,8 @@ export const PopularProduce = ({
   const [onlyOrganic, setOnlyOrganic] = useState(false);
 
   const filteredProducts = products.filter((p) => {
-    const matchesCategory = activeCategory === 'all' || p.category === activeCategory;
+    const categorySlug = p.category?.slug || p.category?.name || '';
+    const matchesCategory = activeCategory === 'all' || categorySlug === activeCategory;
     const matchesOrganic = !onlyOrganic || p.isOrganic;
     return matchesCategory && matchesOrganic;
   });
