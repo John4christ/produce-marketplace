@@ -24,26 +24,31 @@ export const CartProvider = ({ children }) => {
       quantity,
     };
 
+    const existingIndex = cartItems.findIndex((item) => item.product_id === cartProduct.product_id);
+    const isUpdate = existingIndex > -1;
+
     setCartItems((prevItems) => {
-      const existingIndex = prevItems.findIndex((item) => item.product_id === cartProduct.product_id);
-      if (existingIndex > -1) {
+      if (isUpdate) {
         const updated = [...prevItems];
         updated[existingIndex].quantity += quantity;
-        toast.info(`Updated ${product.title || product.name} quantity in cart!`, { autoClose: 2000 });
         return updated;
       } else {
-        toast.success(`Added ${product.title || product.name} to your fresh cart!`, { autoClose: 2000 });
         return [...prevItems, cartProduct];
       }
     });
+
+    if (isUpdate) {
+      toast.info(`Updated ${product.title || product.name} quantity in cart!`, { autoClose: 2000 });
+    } else {
+      toast.success(`Added ${product.title || product.name} to your fresh cart!`, { autoClose: 2000 });
+    }
   };
 
   const removeFromCart = (productId) => {
     setCartItems((prevItems) => {
-      const filtered = prevItems.filter((item) => item.id !== productId);
-      toast.warn('Item removed from cart', { autoClose: 2000 });
-      return filtered;
+      return prevItems.filter((item) => item.id !== productId);
     });
+    toast.warn('Item removed from cart', { autoClose: 2000 });
   };
 
   const updateQuantity = (productId, newQuantity) => {

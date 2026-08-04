@@ -13,6 +13,8 @@ import { CheckoutPage } from '../pages/CheckoutPage';
 import { OrderDetailsPage } from '../pages/OrderDetailsPage';
 import { PaymentCallbackPage } from '../pages/PaymentCallbackPage';
 import { OAuthCallbackPage } from '../pages/OAuthCallbackPage';
+import { OrderSuccessPage } from '../pages/OrderSuccessPage';
+import { PaymentFailedPage } from '../pages/PaymentFailedPage';
 import ProtectedRoute from "../components/ProtectedRoute";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 
@@ -107,6 +109,22 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute allowedRoles={["buyer"]}>
             <PaymentCallbackPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/order/success"
+        element={
+          <ProtectedRoute allowedRoles={["buyer"]}>
+            <OrderSuccessPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/order/failed"
+        element={
+          <ProtectedRoute allowedRoles={["buyer"]}>
+            <PaymentFailedPage />
           </ProtectedRoute>
         }
       />

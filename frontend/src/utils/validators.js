@@ -1,12 +1,32 @@
 /**
  * Validates an email address.
- * @param {string} email 
+ * @param {string} email
  * @returns {boolean}
  */
 export const isValidEmail = (email) => {
   if (!email || typeof email !== 'string') return false;
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return emailRegex.test(email.trim());
+};
+
+/**
+ * Validates a phone number (basic international format).
+ * @param {string} phone
+ * @returns {boolean}
+ */
+export const isValidPhone = (phone) => {
+  if (!phone || typeof phone !== 'string') return false;
+  const cleaned = phone.replace(/[\s\-()]/g, '');
+  return /^\+?\d{7,15}$/.test(cleaned);
+};
+
+/**
+ * Returns whether a value is non-empty after trimming.
+ * @param {string} value
+ * @returns {boolean}
+ */
+export const isRequired = (value) => {
+  return typeof value === 'string' && value.trim().length > 0;
 };
 
 /**

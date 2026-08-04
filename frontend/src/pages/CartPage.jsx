@@ -89,10 +89,12 @@ export const CartPage = () => {
       return;
     }
 
+    const payloadProductId = item.product_id || item.product?.id || item.id;
+
     try {
       setSyncing(true);
       await apiClient.put(`/cart/items/${itemId}`, {
-        product_id: item.product_id || item.id,
+        product_id: payloadProductId,
         quantity: newQuantity,
       });
       updateQuantity(itemId, newQuantity);

@@ -1,10 +1,11 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FiCheckCircle, FiRefreshCw } from 'react-icons/fi';
+import { Link, useNavigate } from 'react-router-dom';
+import { FiCheckCircle, FiShoppingBag, FiTruck, FiCreditCard, FiMapPin, FiUser } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { apiClient } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
+import { isValidEmail, isValidPhone, isRequired } from '../utils/validators';
 import { Button } from '../components/common/Button';
 import { Skeleton } from '../components/common/Skeleton';
 import { ErrorState } from '../components/common/ErrorState';
@@ -18,17 +19,25 @@ export const CheckoutPage = () => {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [deliveryMethod, setDeliveryMethod] = useState('standard');
   const [paymentMethod, setPaymentMethod] = useState('card');
+  const [placingOrder, setPlacingOrder] = useState(false);
+  const [syncingCart, setSyncingCart] = useState(true);
+  const [error, setError] = useState(null);
+  const [stockErrors, setStockErrors] = useState([]);
+  const [syncedBackendItems, setSyncedBackendItems] = useState([]);
+
   const [shippingAddress, setShippingAddress] = useState({
+    fullName: user?.name || '',
+    email: user?.email || '',
+    phone: '',
     street: '',
     city: '',
     state: '',
     postal_code: '',
     country: '',
-    phone: '',
+    note: '',
   });
-  const [placingOrder, setPlacingOrder] = useState(false);
-  const [syncingCart, setSyncingCart] = useState(true);
-  const [error, setError] = useState(null);
+
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const deliveryFee = deliveryMethod === 'express' ? 8.99 : deliveryMethod === 'pickup' ? 0 : 4.99;
 
@@ -46,15 +55,36 @@ export const CheckoutPage = () => {
       try {
         setSyncingCart(true);
         setError(null);
+        setStockErrors([]);
 
         const backendCartResponse = await apiClient.get('/cart');
         const backendCart = backendCartResponse?.data || backendCartResponse;
         const backendItems = backendCart?.items || [];
 
-        const backendItemMap = new Map(backendItems.map((item) => [item.product_id, item]));
+        const mappedItems = backendItems.map((item) => {
+          const product = item.product || {};
+          return {
+            id: item.id,
+            product_id: product.id,
+            title: product.name || 'Unknown Product',
+            price: Number(item.unit_price || product.price || 0),
+            unit: product.unit || 'unit',
+            image: product.images?.[0]?.url || '/placeholder.jpg',
+            farm: product.farmer?.name || 'Local Farm',
+            farmer_name: product.farmer?.name || 'Local Farm',
+            quantity: Number(item.quantity || 1),
+            quantity_available: Number(product.quantity_available ?? 0),
+          };
+        });
+
+        setSyncedBackendItems(mappedItems);
+
+        const backendItemMap = new Map(
+          backendItems.map((item) => [item.product_id || item.product?.id, item])
+        );
 
         for (const item of cartItems) {
-          const productId = item.product_id || item.id;
+          const productId = item.product_id || item.id || item.product?.id;
           const existing = backendItemMap.get(productId);
           if (existing) {
             if (existing.quantity !== item.quantity) {
@@ -85,6 +115,35 @@ export const CheckoutPage = () => {
     }
   }, [cartItems]);
 
+  const validateFields = () => {
+    const errors = {};
+    if (!isRequired(shippingAddress.fullName)) errors.fullName = 'Full name is required.';
+    if (!isRequired(shippingAddress.email)) errors.email = 'Email is required.';
+    else if (!isValidEmail(shippingAddress.email)) errors.email = 'Please enter a valid email address.';
+    if (!isRequired(shippingAddress.phone)) errors.phone = 'Phone number is required.';
+    else if (!isValidPhone(shippingAddress.phone)) errors.phone = 'Please enter a valid phone number.';
+    if (!isRequired(shippingAddress.street)) errors.street = 'Delivery address is required.';
+    if (!isRequired(shippingAddress.city)) errors.city = 'City is required.';
+    if (!isRequired(shippingAddress.state)) errors.state = 'State is required.';
+    if (!isRequired(shippingAddress.postal_code)) errors.postal_code = 'Postal code is required.';
+    if (!isRequired(shippingAddress.country)) errors.country = 'Country is required.';
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const validateStock = () => {
+    const outOfStock = syncedBackendItems.filter(
+      (item) => item.quantity_available < item.quantity
+    );
+    setStockErrors(outOfStock);
+    return outOfStock.length === 0;
+  };
+
+  const handleChangeAddress = (field, value) => {
+    setShippingAddress((prev) => ({ ...prev, [field]: value }));
+    setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
   const handleApplyCoupon = () => {
     const normalized = coupon.trim().toUpperCase();
     if (normalized === 'FARM10') {
@@ -105,21 +164,30 @@ export const CheckoutPage = () => {
       return;
     }
 
-    if (
-      !shippingAddress.street ||
-      !shippingAddress.city ||
-      !shippingAddress.state ||
-      !shippingAddress.postal_code ||
-      !shippingAddress.country
-    ) {
-      toast.error('Please complete your shipping address.');
+    if (!validateFields()) {
+      toast.error('Please fix the errors in the delivery form.');
+      return;
+    }
+
+    if (!validateStock()) {
+      toast.error('Some items have insufficient stock. Please update your cart.');
       return;
     }
 
     setPlacingOrder(true);
     try {
       const orderData = {
-        shipping_address: shippingAddress,
+        shipping_address: {
+          full_name: shippingAddress.fullName,
+          email: shippingAddress.email,
+          phone: shippingAddress.phone,
+          street: shippingAddress.street,
+          city: shippingAddress.city,
+          state: shippingAddress.state,
+          postal_code: shippingAddress.postal_code,
+          country: shippingAddress.country,
+          note: shippingAddress.note || '',
+        },
         delivery_method: deliveryMethod,
         notes: `Payment method: ${paymentMethod}.${appliedCoupon ? ` Coupon: ${appliedCoupon.code}.` : ''}`,
       };
@@ -137,7 +205,7 @@ export const CheckoutPage = () => {
       const callbackUrl = `${window.location.origin}/payment/callback`;
       const paymentResponse = await apiClient.post('/payments/initialize', {
         order_id: order.id,
-        email: user?.email || '',
+        email: shippingAddress.email || user?.email || '',
         callback_url: callbackUrl,
       });
 
@@ -148,30 +216,50 @@ export const CheckoutPage = () => {
         toast.error('Unable to initialize payment.');
       }
     } catch (err) {
-      toast.error(err.message || 'Failed to place order. Please try again.');
+      const message = err?.response?.data?.message || err.message || 'Failed to place order. Please try again.';
+      toast.error(message);
     } finally {
       setPlacingOrder(false);
     }
   };
 
-  const changeAddress = (field, value) => {
-    setShippingAddress((prev) => ({ ...prev, [field]: value }));
-  };
+  const displayItems = syncedBackendItems.length > 0 ? syncedBackendItems : cartItems;
 
-  if (syncingCart) {
+  if (syncingCart && cartItems.length === 0) {
     return (
       <div className="checkout-page">
         <div className="checkout-hero glass-panel">
           <span className="section-tag">Checkout</span>
           <h1>Complete your order</h1>
+          <p className="text-muted">Preparing your checkout...</p>
         </div>
         <div className="checkout-grid">
           <section className="checkout-form-panel glass-panel">
-            <div className="flex-center" style={{ padding: '4rem' }}>
-              <Skeleton height="20px" width="200px" />
-              <p className="text-muted mt-3">Syncing your cart...</p>
+            <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <Skeleton height="24px" width="180px" />
+              <Skeleton height="16px" width="100%" />
+              <Skeleton height="16px" width="80%" />
+              <Skeleton height="40px" width="100%" />
+              <Skeleton height="40px" width="100%" />
+              <Skeleton height="40px" width="100%" />
             </div>
           </section>
+          <aside className="checkout-summary-panel glass-panel">
+            <Skeleton height="20px" width="140px" style={{ marginBottom: '1rem' }} />
+            {[1, 2, 3].map((i) => (
+              <div key={i} style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', alignItems: 'center' }}>
+                <Skeleton height="48px" width="48px" borderRadius="var(--radius-md)" />
+                <div style={{ flex: 1 }}>
+                  <Skeleton height="14px" width="70%" />
+                  <Skeleton height="12px" width="40%" />
+                </div>
+              </div>
+            ))}
+            <Skeleton height="1px" width="100%" style={{ margin: '1rem 0' }} />
+            <Skeleton height="16px" width="100%" />
+            <Skeleton height="16px" width="100%" />
+            <Skeleton height="40px" width="100%" style={{ marginTop: '1rem' }} />
+          </aside>
         </div>
       </div>
     );
@@ -184,8 +272,31 @@ export const CheckoutPage = () => {
           <span className="section-tag">Checkout</span>
           <h1>Complete your order</h1>
         </div>
-        <div className="checkout-grid">
-          <ErrorState message={error} onRetry={() => window.location.reload()} />
+        <ErrorState message={error} onRetry={() => window.location.reload()} />
+      </div>
+    );
+  }
+
+  if (cartItems.length === 0) {
+    return (
+      <div className="checkout-page">
+        <div className="checkout-hero glass-panel">
+          <span className="section-tag">Checkout</span>
+          <h1>Complete your order</h1>
+          <p className="text-muted">Enter shipping and payment details to finalize your farm produce delivery.</p>
+        </div>
+        <div className="empty-checkout glass-panel">
+          <FiShoppingBag style={{ fontSize: '3rem', color: 'var(--text-light)' }} />
+          <h2>Your cart is empty</h2>
+          <p>Looks like you have not added any fresh produce yet. Browse our marketplace to find the best farm products.</p>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <Link to="/cart" className="btn btn-outline btn-lg">
+              Back to Cart
+            </Link>
+            <Link to="/" className="btn btn-ghost btn-lg">
+              Continue Shopping
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -203,81 +314,100 @@ export const CheckoutPage = () => {
         <section className="checkout-form-panel glass-panel">
           <div className="checkout-section">
             <div className="section-head">
-              <h2>Customer Information</h2>
+              <h2><FiUser style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />Customer Information</h2>
               <p className="text-muted">Confirm your contact details before checkout.</p>
             </div>
 
             <div className="customer-info-grid">
               <div>
-                <label>Name</label>
-                <input type="text" value={user?.name || ''} disabled />
+                <label>Full Name</label>
+                <input type="text" value={shippingAddress.fullName} onChange={(e) => handleChangeAddress('fullName', e.target.value)} placeholder="John Doe" />
+                {fieldErrors.fullName && <span className="field-error">{fieldErrors.fullName}</span>}
               </div>
               <div>
                 <label>Email</label>
-                <input type="text" value={user?.email || ''} disabled />
+                <input
+                  type="email"
+                  value={shippingAddress.email}
+                  onChange={(e) => handleChangeAddress('email', e.target.value)}
+                  placeholder="john@example.com"
+                  disabled={!!user?.email}
+                />
+                {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
+              </div>
+              <div>
+                <label>Phone Number</label>
+                <input type="tel" value={shippingAddress.phone} onChange={(e) => handleChangeAddress('phone', e.target.value)} placeholder="+1 (555) 000-0000" />
+                {fieldErrors.phone && <span className="field-error">{fieldErrors.phone}</span>}
               </div>
             </div>
           </div>
 
           <div className="checkout-section">
             <div className="section-head">
-              <h2>Shipping Address</h2>
+              <h2><FiMapPin style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />Delivery Address</h2>
               <p className="text-muted">Where should we deliver your fresh produce?</p>
             </div>
 
             <div className="form-grid">
               <label className="full-width">
-                Street address
+                Delivery Address
                 <input
                   type="text"
                   value={shippingAddress.street}
-                  onChange={(e) => changeAddress('street', e.target.value)}
-                  placeholder="123 Farm Lane"
+                  onChange={(e) => handleChangeAddress('street', e.target.value)}
+                  placeholder="123 Farm Lane, Apt 4B"
                 />
+                {fieldErrors.street && <span className="field-error">{fieldErrors.street}</span>}
               </label>
               <label>
                 City
                 <input
                   type="text"
                   value={shippingAddress.city}
-                  onChange={(e) => changeAddress('city', e.target.value)}
+                  onChange={(e) => handleChangeAddress('city', e.target.value)}
                   placeholder="Sonoma"
                 />
+                {fieldErrors.city && <span className="field-error">{fieldErrors.city}</span>}
               </label>
               <label>
                 State
                 <input
                   type="text"
                   value={shippingAddress.state}
-                  onChange={(e) => changeAddress('state', e.target.value)}
+                  onChange={(e) => handleChangeAddress('state', e.target.value)}
                   placeholder="California"
                 />
+                {fieldErrors.state && <span className="field-error">{fieldErrors.state}</span>}
               </label>
               <label>
-                Postal code
+                Postal Code
                 <input
                   type="text"
                   value={shippingAddress.postal_code}
-                  onChange={(e) => changeAddress('postal_code', e.target.value)}
+                  onChange={(e) => handleChangeAddress('postal_code', e.target.value)}
                   placeholder="94952"
                 />
+                {fieldErrors.postal_code && <span className="field-error">{fieldErrors.postal_code}</span>}
               </label>
               <label>
                 Country
                 <input
                   type="text"
                   value={shippingAddress.country}
-                  onChange={(e) => changeAddress('country', e.target.value)}
+                  onChange={(e) => handleChangeAddress('country', e.target.value)}
                   placeholder="USA"
                 />
+                {fieldErrors.country && <span className="field-error">{fieldErrors.country}</span>}
               </label>
-              <label>
-                Phone number
-                <input
-                  type="text"
-                  value={shippingAddress.phone}
-                  onChange={(e) => changeAddress('phone', e.target.value)}
-                  placeholder="(123) 456-7890"
+              <label className="full-width">
+                Delivery Note <span style={{ color: 'var(--text-light)', fontWeight: 400 }}>(optional)</span>
+                <textarea
+                  className="textarea-field"
+                  value={shippingAddress.note}
+                  onChange={(e) => handleChangeAddress('note', e.target.value)}
+                  placeholder="Gate code, special instructions, preferred delivery time..."
+                  rows={3}
                 />
               </label>
             </div>
@@ -285,7 +415,7 @@ export const CheckoutPage = () => {
 
           <div className="checkout-section">
             <div className="section-head">
-              <h2>Delivery Method</h2>
+              <h2><FiTruck style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />Delivery Method</h2>
               <p className="text-muted">Choose how your harvest arrives.</p>
             </div>
             <div className="radio-group">
@@ -333,7 +463,7 @@ export const CheckoutPage = () => {
 
           <div className="checkout-section">
             <div className="section-head">
-              <h2>Payment Method</h2>
+              <h2><FiCreditCard style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />Payment Method</h2>
               <p className="text-muted">Select your preferred method.</p>
             </div>
             <div className="radio-group">
@@ -387,19 +517,27 @@ export const CheckoutPage = () => {
           </div>
 
           <div className="summary-items-list">
-            {cartItems.map((item) => (
+            {displayItems.map((item) => (
               <div key={item.id} className="summary-item-row">
                 <div className="summary-item-product">
                   <img src={item.image} alt={item.title} className="summary-item-image" />
                   <div>
                     <strong>{item.title}</strong>
-                    <p className="text-muted">{item.quantity} × {formatCurrency(item.price)}</p>
+                    <p className="summary-item-meta">
+                      {item.farm || item.farmer_name} • {item.quantity} × {formatCurrency(item.price)} / {item.unit || 'unit'}
+                    </p>
                   </div>
                 </div>
-                <span>{formatCurrency(item.price * item.quantity)}</span>
+                <span className="summary-item-subtotal">{formatCurrency(item.price * item.quantity)}</span>
               </div>
             ))}
           </div>
+
+          {stockErrors.length > 0 && (
+            <div className="stock-error">
+              <strong>Stock issue:</strong> {stockErrors.map((i) => i.title).join(', ')} — please update quantities or remove items.
+            </div>
+          )}
 
           <div className="summary-divider" />
 
@@ -409,7 +547,7 @@ export const CheckoutPage = () => {
               <strong>{formatCurrency(cartSubtotal)}</strong>
             </div>
             <div className="summary-row">
-              <span>Delivery fee</span>
+              <span>Shipping</span>
               <strong>{deliveryFee === 0 ? 'FREE' : formatCurrency(deliveryFee)}</strong>
             </div>
             <div className="summary-row">
@@ -436,13 +574,33 @@ export const CheckoutPage = () => {
                 Apply
               </Button>
             </div>
+            {appliedCoupon && (
+              <p className="coupon-info" style={{ marginTop: '0.5rem' }}>Applied {appliedCoupon.code}: {appliedCoupon.label}</p>
+            )}
           </div>
 
-          <Button variant="primary" size="lg" fullWidth onClick={handlePlaceOrder} isLoading={placingOrder}>
-            Place Order
-          </Button>
+          <div className="checkout-buttons">
+            <Button
+              variant="primary"
+              size="lg"
+              fullWidth
+              onClick={handlePlaceOrder}
+              isLoading={placingOrder}
+              disabled={stockErrors.length > 0}
+            >
+              {placingOrder ? 'Processing...' : 'Proceed to Payment'}
+            </Button>
+            <div className="btn-row">
+              <Link to="/cart" className="btn btn-outline btn-md" style={{ flex: 1, textAlign: 'center' }}>
+                Back to Cart
+              </Link>
+              <Link to="/" className="btn btn-ghost btn-md" style={{ flex: 1, textAlign: 'center' }}>
+                Continue Shopping
+              </Link>
+            </div>
+          </div>
 
-          <div className="checkout-footnote text-muted">
+          <div className="checkout-footnote">
             <FiCheckCircle /> Your order is protected with secure payment and local farm delivery.
           </div>
         </aside>

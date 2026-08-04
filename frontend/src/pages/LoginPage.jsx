@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight, FiShield, FiCheckCircle } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
-import { FaFacebook } from 'react-icons/fa';
 import { TbLeaf } from 'react-icons/tb';
 import { Input } from '../components/common/Input';
 import { Button } from '../components/common/Button';
@@ -158,17 +157,6 @@ const token = response.data.data.token;
             >
               <FcGoogle className="social-icon" />
               <span>Google</span>
-            </button>
-
-            <button
-              type="button"
-              className="btn btn-social btn-facebook"
-              onClick={() => handleSocialLogin('facebook')}
-              disabled={isLoading}
-              aria-label="Sign in with Facebook"
-            >
-              <FaFacebook className="social-icon facebook-blue" />
-              <span>Facebook</span>
             </button>
           </div>
 
