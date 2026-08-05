@@ -24,6 +24,7 @@ class VerifyEmailNotification extends Notification
         );
 
         return (new MailMessage)
+            ->from(config('mail.from.address'), config('mail.from.name'))
             ->subject('Verify Your Email Address')
             ->line('Please click the button below to verify your email address.')
             ->action('Verify Email', $verificationUrl)

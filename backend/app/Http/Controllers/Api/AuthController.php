@@ -16,7 +16,6 @@ use App\Notifications\ResetPasswordNotification;
 use App\Notifications\VerifyEmailNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\URL;
@@ -147,15 +146,18 @@ class AuthController extends Controller
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
     {
         $validated = $request->validated();
-        $user = User::where('email', $validated['email'])->firstOrFail();
 
-        $token = app('auth.password.broker')->createToken($user);
+        $user = User::where('email', $validated['email'])->first();
 
-        $user->notify(new ResetPasswordNotification($token));
+        if ($user) {
+            $token = app('auth.password.broker')->createToken($user);
+
+            $user->notify(new ResetPasswordNotification($token));
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Password reset link sent to your email.',
+            'message' => 'If an account exists with this email, a password reset link has been sent.',
         ]);
     }
 
