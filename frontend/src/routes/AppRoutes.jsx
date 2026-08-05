@@ -7,6 +7,7 @@ import { RegisterPage } from '../pages/RegisterPage';
 import { BuyerDashboardPage } from '../pages/BuyerDashboardPage';
 import { FarmerDashboardPage } from '../pages/FarmerDashboardPage';
 import { AdminDashboardPage } from '../pages/AdminDashboardPage';
+import AdminUsersPage from '../pages/admin/AdminUsersPage';
 import { ProductDetailsPage } from '../pages/ProductDetailsPage';
 import { CartPage } from '../pages/CartPage';
 import { CheckoutPage } from '../pages/CheckoutPage';
@@ -77,6 +78,14 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
             <AdminDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminUsersPage />
           </ProtectedRoute>
         }
       />

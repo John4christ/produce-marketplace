@@ -18,6 +18,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
@@ -67,13 +68,20 @@ class AdminController extends Controller
         $query = User::query()
             ->with('roles')
             ->when($request->filled('search'), function ($query, $search) {
-                $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
             })
             ->when($request->filled('role'), function ($query, $role) {
                 $query->whereHas('roles', fn ($q) => $q->where('slug', $role));
-            })
-            ->orderByDesc('created_at');
+            });
+
+        if ($request->input('sort') === 'oldest') {
+            $query->orderBy('created_at', 'asc');
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
 
         $perPage = $request->integer('per_page', 15);
         $users = $query->paginate($perPage);
@@ -81,6 +89,12 @@ class AdminController extends Controller
         return response()->json([
             'success' => true,
             'data' => UserResource::collection($users),
+            'meta' => [
+                'current_page' => $users->currentPage(),
+                'last_page' => $users->lastPage(),
+                'per_page' => $users->perPage(),
+                'total' => $users->total(),
+            ],
         ]);
     }
 
@@ -122,9 +136,30 @@ class AdminController extends Controller
         ]);
     }
 
-    public function deleteUser(User $user): JsonResponse
+    public function deleteUser(Request $request, User $user): JsonResponse
     {
-        $user->delete();
+        if ($request->user()->id === $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You cannot delete your own account.',
+            ], 403);
+        }
+
+        DB::transaction(function () use ($user) {
+            $user->tokens()->delete();
+
+            $user->notifications()->delete();
+
+            DB::table('sessions')->where('user_id', $user->id)->delete();
+
+            $user->roles()->detach();
+
+            if ($user->avatar) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+
+            $user->delete();
+        });
 
         return response()->json([
             'success' => true,
