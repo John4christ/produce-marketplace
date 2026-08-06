@@ -117,7 +117,7 @@ export const FarmerDashboardPage = () => {
     {
       id: "notif-2",
       title: "Payout scheduled",
-      desc: "Your next payout of $3,450 is scheduled for tomorrow.",
+      desc: "Your next payout of ₦3,450 is scheduled for tomorrow.",
       time: "2 hrs ago",
       unread: false,
     },

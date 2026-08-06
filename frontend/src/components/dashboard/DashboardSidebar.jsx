@@ -15,6 +15,7 @@ import {
 import { TbLeaf } from 'react-icons/tb';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
+import Avatar from '../common/Avatar';
 
 export const DashboardSidebar = ({ isCollapsed, onToggleCollapse, wishlistCount = 0, ordersCount, notificationsCount }) => {
   const location = useLocation();
@@ -29,8 +30,6 @@ export const DashboardSidebar = ({ isCollapsed, onToggleCollapse, wishlistCount 
     { label: 'Notifications', icon: FiBell, path: '/notifications', badge: notificationsCount > 0 ? notificationsCount : null },
     { label: 'Account Settings', icon: FiSettings, path: '/settings', badge: null }
   ];
-
-  const userInitial = user?.name?.charAt(0)?.toUpperCase() || 'U';
 
   return (
     <aside className={`dashboard-sidebar glass-panel ${isCollapsed ? 'collapsed' : ''}`}>
@@ -57,9 +56,15 @@ export const DashboardSidebar = ({ isCollapsed, onToggleCollapse, wishlistCount 
 
       {!isCollapsed && user && (
         <div className="sidebar-user-pill">
-          <div className="pill-avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-primary)', color: '#fff', borderRadius: '50%', width: '40px', height: '40px', fontSize: '16px', fontWeight: 600 }}>
-            {userInitial}
-          </div>
+          <Avatar
+            src={user.avatar}
+            name={user.name}
+            alt={user.name}
+            className="pill-avatar"
+            fallbackBg="var(--color-primary)"
+            fallbackSize={16}
+            fallbackWeight={600}
+          />
           <div className="pill-meta">
             <span className="pill-name">{user.name}</span>
             <span className="pill-role">Buyer Dashboard</span>

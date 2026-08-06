@@ -76,7 +76,10 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])
         Route::put('/users/{user}', [AdminController::class, 'updateUser'])
             ->middleware(CheckRole::class . ':admin');
 
-        Route::delete('/users/{user}', [AdminController::class, 'deleteUser'])
+        Route::post('/users/{user}/deactivate', [AdminController::class, 'deactivateUser'])
+            ->middleware(CheckRole::class . ':admin');
+
+        Route::post('/users/{user}/reactivate', [AdminController::class, 'reactivateUser'])
             ->middleware(CheckRole::class . ':admin');
 
         Route::get('/products', [AdminController::class, 'products'])

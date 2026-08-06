@@ -4,6 +4,8 @@ import { MainLayout } from '../layouts/MainLayout';
 import { HomePage } from '../pages/HomePage';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
+import { ForgotPasswordPage } from '../pages/ForgotPasswordPage';
+import { ResetPasswordPage } from '../pages/ResetPasswordPage';
 import { BuyerDashboardPage } from '../pages/BuyerDashboardPage';
 import { FarmerDashboardPage } from '../pages/FarmerDashboardPage';
 import { AdminDashboardPage } from '../pages/AdminDashboardPage';
@@ -46,6 +48,22 @@ export const AppRoutes = () => {
         element={
           <MainLayout>
             <RegisterPage />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <MainLayout>
+            <ForgotPasswordPage />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/reset-password"
+        element={
+          <MainLayout>
+            <ResetPasswordPage />
           </MainLayout>
         }
       />

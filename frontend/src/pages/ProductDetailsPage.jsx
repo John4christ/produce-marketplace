@@ -8,6 +8,7 @@ import { Badge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
 import { Skeleton } from '../components/common/Skeleton';
 import { ErrorState } from '../components/common/ErrorState';
+import Avatar from '../components/common/Avatar';
 import { toast } from 'react-toastify';
 
 export const ProductDetailsPage = () => {
@@ -295,9 +296,14 @@ export const ProductDetailsPage = () => {
             <div className="reviews-list">
               {reviews.map((review) => (
                 <div key={review.id} className="review-card">
-                  <div className="review-avatar">
-                    <img src={review.user?.avatar || '/placeholder.jpg'} alt={review.user?.name || 'User'} />
-                  </div>
+                  <Avatar
+                    src={review.user?.avatar}
+                    name={review.user?.name}
+                    alt={review.user?.name || 'User'}
+                    className="review-avatar"
+                    fallbackSize={16}
+                    fallbackWeight={600}
+                  />
                   <div className="review-body">
                     <div className="review-header">
                       <strong>{review.user?.name || 'Anonymous'}</strong>

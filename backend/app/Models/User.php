@@ -15,6 +15,9 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_INACTIVE = 'inactive';
+
     /**
      * @use HasFactory<UserFactory>
      */
@@ -24,6 +27,7 @@ class User extends Authenticatable
         'email',
         'password',
         'avatar',
+        'status',
     ];
 
     protected $hidden = [
@@ -37,6 +41,11 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === self::STATUS_ACTIVE;
     }
 
     public function roles()

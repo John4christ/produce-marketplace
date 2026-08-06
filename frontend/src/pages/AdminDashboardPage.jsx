@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { FiGrid, FiUsers, FiPackage, FiShoppingCart, FiBarChart2, FiBell, FiSettings, FiTrendingUp, FiClipboard, FiShield } from 'react-icons/fi';
+import { FiGrid, FiUsers, FiPackage, FiShoppingCart, FiBarChart2, FiBell, FiSettings, FiTrendingUp, FiClipboard, FiShield, FiUser, FiUserX, FiUserCheck, FiAlertTriangle } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { DashboardHeader } from '../components/dashboard/DashboardHeader';
 import { Badge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
 import { Skeleton } from '../components/common/Skeleton';
 import { ErrorState } from '../components/common/ErrorState';
+import ConfirmModal from '../components/common/ConfirmModal';
+import Avatar from '../components/common/Avatar';
 import { formatCurrency } from '../utils/formatters';
 import { apiClient } from '../services/api';
+import { toast } from 'react-toastify';
 
 export const AdminDashboardPage = () => {
   const { user } = useAuth();
@@ -22,6 +25,8 @@ export const AdminDashboardPage = () => {
   const [orders, setOrders] = useState([]);
   const [topProducts, setTopProducts] = useState([]);
   const [topFarmers, setTopFarmers] = useState([]);
+  const [busyId, setBusyId] = useState(null);
+  const [confirmUser, setConfirmUser] = useState(null);
 
   const fetchDashboard = async () => {
     try {
@@ -37,9 +42,9 @@ export const AdminDashboardPage = () => {
       ]);
 
       setStats(statsRes?.data || statsRes || null);
-      setUsers(Array.isArray(usersRes?.data?.data) ? usersRes.data.data : []);
-      setProducts(Array.isArray(productsRes?.data?.data) ? productsRes.data.data : []);
-      setOrders(Array.isArray(ordersRes?.data?.data) ? ordersRes.data.data : []);
+      setUsers(Array.isArray(usersRes?.data?.data) ? usersRes.data.data : (Array.isArray(usersRes?.data) ? usersRes.data : []));
+      setProducts(Array.isArray(productsRes?.data?.data) ? productsRes.data.data : (Array.isArray(productsRes?.data) ? productsRes.data : []));
+      setOrders(Array.isArray(ordersRes?.data?.data) ? ordersRes.data.data : (Array.isArray(ordersRes?.data) ? ordersRes.data : []));
       setTopProducts(Array.isArray(topProductsRes?.data) ? topProductsRes.data : []);
       setTopFarmers(Array.isArray(topFarmersRes?.data) ? topFarmersRes.data : []);
     } catch (err) {
@@ -52,6 +57,45 @@ export const AdminDashboardPage = () => {
   useEffect(() => {
     fetchDashboard();
   }, []);
+
+  const isSelf = (u) => user && u.id === user.id;
+
+  const handleDeactivateRequest = (u) => {
+    if (isSelf(u)) {
+      toast.error('You cannot deactivate your own account.');
+      return;
+    }
+    setConfirmUser(u);
+  };
+
+  const handleConfirmDeactivate = async () => {
+    if (!confirmUser) return;
+    try {
+      setBusyId(confirmUser.id);
+      await apiClient.post(`/admin/users/${confirmUser.id}/deactivate`);
+      toast.success(`${confirmUser.name}'s account has been deactivated.`);
+      setConfirmUser(null);
+      fetchDashboard();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err.message || 'Failed to deactivate user');
+      setConfirmUser(null);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleReactivate = async (u) => {
+    try {
+      setBusyId(u.id);
+      await apiClient.post(`/admin/users/${u.id}/reactivate`);
+      toast.success(`${u.name}'s account has been reactivated.`);
+      fetchDashboard();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err.message || 'Failed to reactivate user');
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   const sections = [
     { id: 'overview', label: 'Overview', icon: FiGrid },
@@ -302,8 +346,8 @@ export const AdminDashboardPage = () => {
                             <tr key={userRow.id}>
                               <td>{userRow.name}</td>
                               <td>{userRow.email}</td>
-                              <td className="text-capitalize">{userRow.roles?.[0]?.slug || 'user'}</td>
-                              <td><Badge variant={userRow.email_verified_at ? 'green' : 'amber'}>{userRow.email_verified_at ? 'Active' : 'Pending'}</Badge></td>
+                              <td className="text-capitalize">{userRow.roles?.[0] || 'user'}</td>
+                              <td><Badge variant={userRow.status === 'inactive' ? 'red' : 'green'}>{userRow.status === 'inactive' ? 'Inactive' : 'Active'}</Badge></td>
                             </tr>
                           ))}
                         </tbody>
@@ -364,21 +408,76 @@ export const AdminDashboardPage = () => {
                           <th>Role</th>
                           <th>Status</th>
                           <th>Joined</th>
+                          <th>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {users.map((userRow) => (
                           <tr key={userRow.id}>
-                            <td>{userRow.name}</td>
+                            <td className="user-cell">
+                              <div className="user-meta">
+                                <Avatar
+                                  src={userRow.avatar}
+                                  name={userRow.name}
+                                  alt={userRow.name}
+                                  className="avatar-small"
+                                  icon={FiUser}
+                                  fallbackSize={14}
+                                  fallbackWeight={600}
+                                />
+                                <strong>{userRow.name}</strong>
+                              </div>
+                            </td>
                             <td>{userRow.email}</td>
-                            <td className="text-capitalize">{userRow.roles?.[0]?.slug || 'user'}</td>
-                            <td><Badge variant={userRow.email_verified_at ? 'green' : 'amber'}>{userRow.email_verified_at ? 'Active' : 'Pending'}</Badge></td>
+                            <td className="text-capitalize">{userRow.roles?.[0] || 'user'}</td>
+                            <td><Badge variant={userRow.status === 'inactive' ? 'red' : 'green'}>{userRow.status === 'inactive' ? 'Inactive' : 'Active'}</Badge></td>
                             <td>{userRow.created_at ? new Date(userRow.created_at).toLocaleDateString() : '-'}</td>
+                            <td>
+                              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                <Button variant="outline" size="sm" onClick={() => window.alert('View not implemented yet')} icon={FiEdit3}>View</Button>
+                                <Button variant="ghost" size="sm" onClick={() => window.alert('Edit placeholder')} icon={FiEdit3}>Edit</Button>
+                                {userRow.status === 'inactive' ? (
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={() => handleReactivate(userRow)}
+                                    isLoading={busyId === userRow.id}
+                                    icon={FiUserCheck}
+                                    isDisabled={isSelf(userRow)}
+                                  >
+                                    Reactivate
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    variant="danger"
+                                    size="sm"
+                                    onClick={() => handleDeactivateRequest(userRow)}
+                                    isLoading={busyId === userRow.id}
+                                    icon={FiUserX}
+                                    isDisabled={isSelf(userRow)}
+                                  >
+                                    Deactivate
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
+                  <ConfirmModal
+                    isOpen={!!confirmUser}
+                    title="Deactivate Account"
+                    message={`Are you sure you want to deactivate ${confirmUser ? confirmUser.name : ''}'s account? This user will no longer be able to log in, and any deactivated farmers' products will be hidden from buyers. You can reactivate this account at any time.`}
+                    icon={FiAlertTriangle}
+                    iconTone="danger"
+                    confirmText="Deactivate"
+                    confirmVariant="danger"
+                    isLoading={busyId === (confirmUser && confirmUser.id)}
+                    onConfirm={handleConfirmDeactivate}
+                    onClose={() => setConfirmUser(null)}
+                  />
                 </section>
               )}
 

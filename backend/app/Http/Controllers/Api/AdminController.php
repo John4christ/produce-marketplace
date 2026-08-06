@@ -136,35 +136,64 @@ class AdminController extends Controller
         ]);
     }
 
-    public function deleteUser(Request $request, User $user): JsonResponse
+    public function deactivateUser(Request $request, User $user): JsonResponse
     {
         if ($request->user()->id === $user->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'You cannot delete your own account.',
-            ], 403);
+                'message' => 'You cannot deactivate your own account.',
+            ], 422);
         }
 
-        DB::transaction(function () use ($user) {
-            $user->tokens()->delete();
+        if ($user->status !== User::STATUS_ACTIVE) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This account is already inactive.',
+            ], 422);
+        }
 
-            $user->notifications()->delete();
+        if ($user->hasRole('admin') && $this->isLastActiveAdmin($user->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You cannot deactivate the last remaining admin account.',
+            ], 422);
+        }
 
-            DB::table('sessions')->where('user_id', $user->id)->delete();
-
-            $user->roles()->detach();
-
-            if ($user->avatar) {
-                Storage::disk('public')->delete($user->avatar);
-            }
-
-            $user->delete();
-        });
+        $user->update(['status' => User::STATUS_INACTIVE]);
+        $user->tokens()->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'User deleted successfully.',
+            'message' => 'User account deactivated successfully.',
+            'data' => new UserResource($user->load('roles')),
         ]);
+    }
+
+    public function reactivateUser(User $user): JsonResponse
+    {
+        if ($user->status !== User::STATUS_INACTIVE) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This account is already active.',
+            ], 422);
+        }
+
+        $user->update(['status' => User::STATUS_ACTIVE]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User account reactivated successfully.',
+            'data' => new UserResource($user->load('roles')),
+        ]);
+    }
+
+    private function isLastActiveAdmin(int $excludeUserId): bool
+    {
+        return User::query()
+            ->where('id', '!=', $excludeUserId)
+            ->where('status', User::STATUS_ACTIVE)
+            ->whereHas('roles', fn ($q) => $q->where('slug', 'admin'))
+            ->doesntExist();
     }
 
     public function products(Request $request): JsonResponse

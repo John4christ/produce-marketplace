@@ -131,6 +131,11 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editProduct = null }) => 
     try {
       const url = isEdit ? `/products/${editProduct.id}` : "/products";
       const formData = new FormData();
+
+      if (isEdit) {
+        formData.append("_method", "PUT");
+      }
+
       formData.append("name", form.name);
       formData.append("description", form.description);
       formData.append("category_id", form.category_id);
@@ -145,14 +150,19 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editProduct = null }) => 
         formData.append("images[]", imageFile);
       }
 
-      const response = isEdit
-        ? await apiClient.put(url, formData)
-        : await apiClient.post(url, formData);
+      const response = await apiClient.post(url, formData);
 
       toast.success(isEdit ? "Product updated successfully" : "Product added successfully");
       onSuccess?.();
       onClose();
     } catch (err) {
+      const serverErrors = err.errors || {};
+      const fieldErrors = {};
+      Object.entries(serverErrors).forEach(([key, messages]) => {
+        const fieldKey = key === "images" ? "image" : key;
+        fieldErrors[fieldKey] = Array.isArray(messages) ? messages[0] : messages;
+      });
+      setErrors(fieldErrors);
       const message =
         err.response?.data?.message ||
         (err.response?.data?.errors

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { DashboardSidebar } from '../components/dashboard/DashboardSidebar';
 import { DashboardHeader } from '../components/dashboard/DashboardHeader';
@@ -34,8 +34,6 @@ export const BuyerDashboardPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [wishlist, setWishlist] = useState([]);
-  const wishlistRef = useRef(wishlist);
-  wishlistRef.current = wishlist;
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
 
   const [products, setProducts] = useState([]);
@@ -95,19 +93,16 @@ export const BuyerDashboardPage = () => {
   }, [searchQuery, activeCategory, priceRange.min, priceRange.max, currentView]);
 
   const toggleWishlist = (productId) => {
-    const exists = wishlistRef.current.includes(productId);
     setWishlist((prev) => {
+      const exists = prev.includes(productId);
       if (exists) {
+        toast.info('Item removed from wishlist', { autoClose: 2000 });
         return prev.filter((id) => id !== productId);
       } else {
+        toast.success('Item added to your saved wishlist! ❤️', { autoClose: 2000 });
         return [...prev, productId];
       }
     });
-    if (exists) {
-      toast.info('Item removed from wishlist', { autoClose: 2000 });
-    } else {
-      toast.success('Item added to your saved wishlist! ❤️', { autoClose: 2000 });
-    }
   };
 
   const handleAddToCart = (product) => {

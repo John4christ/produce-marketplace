@@ -211,3 +211,89 @@ button, input, select, textarea {
     background:#171d2d;
     padding:12px 0 0 0;
 }
+
+.confirm-modal {
+    width: 460px;
+    max-width: 92vw;
+    background: var(--bg-surface);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-lg);
+}
+
+.confirm-modal .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.confirm-modal .modal-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.modal-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.modal-close-btn:hover:not(:disabled) {
+    background: var(--bg-main);
+    color: var(--text-main);
+}
+
+.confirm-modal .confirm-modal-body {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 4px 0 8px 0;
+}
+
+.confirm-modal .confirm-modal-body p {
+    margin: 0;
+    line-height: 1.6;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.confirm-modal .confirm-modal-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-full);
+    flex-shrink: 0;
+    font-size: 1.25rem;
+}
+
+.confirm-modal .confirm-modal-icon.warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--amber-500);
+}
+
+.confirm-modal .confirm-modal-icon.danger {
+    background: rgba(220, 38, 38, 0.12);
+    color: #dc2626;
+}
+
+.confirm-modal .confirm-modal-icon.success {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--primary-600);
+}
+
+.confirm-modal .modal-actions {
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-color);
+}

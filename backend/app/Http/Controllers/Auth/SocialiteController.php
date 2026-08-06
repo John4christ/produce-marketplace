@@ -54,6 +54,10 @@ class SocialiteController extends Controller
 
         $user = User::where('email', $socialUser->getEmail())->first();
 
+        if ($user && $user->status === User::STATUS_INACTIVE) {
+            return redirect('/login?error=deactivated');
+        }
+
         if (!$user) {
             $user = User::create([
                 'name' => $socialUser->getName() ?: $socialUser->getNickname() ?: 'Social User',

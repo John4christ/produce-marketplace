@@ -1,10 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { FiSearch, FiUser, FiTrash2, FiEdit3 } from 'react-icons/fi';
+import { FiSearch, FiUser, FiEdit3, FiUserX, FiUserCheck, FiAlertTriangle } from 'react-icons/fi';
 import { apiClient } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
+import { Badge } from '../../components/common/Badge';
 import { Skeleton } from '../../components/common/Skeleton';
 import { ErrorState } from '../../components/common/ErrorState';
+import ConfirmModal from '../../components/common/ConfirmModal';
+import Avatar from '../../components/common/Avatar';
 import { toast } from 'react-toastify';
 
 export const AdminUsersPage = () => {
@@ -17,8 +20,8 @@ export const AdminUsersPage = () => {
   const [perPage] = useState(15);
   const [total, setTotal] = useState(0);
   const [sort, setSort] = useState('newest');
-  const [deletingId, setDeletingId] = useState(null);
-  const [deleting, setDeleting] = useState(false);
+  const [busyId, setBusyId] = useState(null);
+  const [confirmUser, setConfirmUser] = useState(null);
   const { user: currentUser } = useAuth();
 
   const fetchUsers = useCallback(async () => {
@@ -42,25 +45,51 @@ export const AdminUsersPage = () => {
     fetchUsers();
   }, [fetchUsers]);
 
-  const handleDelete = async (user) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) return;
-    if (currentUser && user.id === currentUser.id) {
-      toast.error('You cannot delete your own admin account.');
+  const isSelf = (u) => currentUser && u.id === currentUser.id;
+
+  const handleDeactivateRequest = (user) => {
+    if (isSelf(user)) {
+      toast.error('You cannot deactivate your own account.');
       return;
     }
+    setConfirmUser(user);
+  };
+
+  const handleConfirmDeactivate = async () => {
+    if (!confirmUser) return;
     try {
-      setDeletingId(user.id);
-      setDeleting(true);
-      await apiClient.delete(`/admin/users/${user.id}`);
-      setUsers((prev) => prev.filter((u) => u.id !== user.id));
-      toast.success('User deleted successfully.');
+      setBusyId(confirmUser.id);
+      await apiClient.post(`/admin/users/${confirmUser.id}/deactivate`);
+      toast.success(`${confirmUser.name}'s account has been deactivated.`);
+      setConfirmUser(null);
+      fetchUsers();
     } catch (err) {
-      toast.error(err.message || 'Failed to delete user');
+      toast.error(err?.response?.data?.message || err.message || 'Failed to deactivate user');
+      setConfirmUser(null);
     } finally {
-      setDeleting(false);
-      setDeletingId(null);
+      setBusyId(null);
     }
   };
+
+  const handleReactivate = async (user) => {
+    try {
+      setBusyId(user.id);
+      await apiClient.post(`/admin/users/${user.id}/reactivate`);
+      toast.success(`${user.name}'s account has been reactivated.`);
+      fetchUsers();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err.message || 'Failed to reactivate user');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const statusBadge = (status) =>
+    status === 'inactive' ? (
+      <Badge variant="red">Inactive</Badge>
+    ) : (
+      <Badge variant="green">Active</Badge>
+    );
 
   if (loading) {
     return (
@@ -113,6 +142,7 @@ export const AdminUsersPage = () => {
                 <th>User</th>
                 <th>Email</th>
                 <th>Role</th>
+                <th>Status</th>
                 <th>Verified</th>
                 <th>Joined</th>
                 <th>Actions</th>
@@ -123,23 +153,52 @@ export const AdminUsersPage = () => {
                 <tr key={u.id}>
                   <td className="user-cell">
                     <div className="user-meta">
-                      <div className="avatar-small">
-                        {u.avatar ? <img src={u.avatar} alt={u.name} /> : <FiUser />}
-                      </div>
+                      <Avatar
+                        src={u.avatar}
+                        name={u.name}
+                        alt={u.name}
+                        className="avatar-small"
+                        icon={FiUser}
+                        fallbackSize={16}
+                        fallbackWeight={600}
+                      />
                       <div>
                         <strong>{u.name}</strong>
+                        {isSelf(u) && <span className="text-muted" style={{ fontSize: '0.75rem', marginLeft: 4 }}>(you)</span>}
                       </div>
                     </div>
                   </td>
                   <td>{u.email}</td>
                   <td>{Array.isArray(u.roles) ? u.roles.join(', ') : u.roles}</td>
+                  <td>{statusBadge(u.status)}</td>
                   <td>{u.email_verified_at ? 'Yes' : 'No'}</td>
                   <td>{new Date(u.created_at).toLocaleDateString()}</td>
                   <td>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <Button variant="outline" size="sm" onClick={() => window.alert('View not implemented yet') } icon={FiEdit3}>View</Button>
-                      <Button variant="ghost" size="sm" onClick={() => window.alert('Edit placeholder') } icon={FiEdit3}>Edit</Button>
-                      <Button variant="amber" size="sm" onClick={() => handleDelete(u)} isLoading={deleting && deletingId === u.id} icon={FiTrash2}>Delete</Button>
+                      <Button variant="outline" size="sm" onClick={() => window.alert('View not implemented yet')} icon={FiEdit3}>View</Button>
+                      {u.status === 'inactive' ? (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => handleReactivate(u)}
+                          isLoading={busyId === u.id}
+                          icon={FiUserCheck}
+                          isDisabled={isSelf(u)}
+                        >
+                          Reactivate
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleDeactivateRequest(u)}
+                          isLoading={busyId === u.id}
+                          icon={FiUserX}
+                          isDisabled={isSelf(u)}
+                        >
+                          Deactivate
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -157,6 +216,19 @@ export const AdminUsersPage = () => {
           <Button onClick={() => setPage((p) => p + 1)}>Next</Button>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={!!confirmUser}
+        title="Deactivate Account"
+        message={`Are you sure you want to deactivate ${confirmUser ? confirmUser.name : ''}'s account? This user will no longer be able to log in, and any deactivated farmers' products will be hidden from buyers. You can reactivate this account at any time.`}
+        icon={FiAlertTriangle}
+        iconTone="danger"
+        confirmText="Deactivate"
+        confirmVariant="danger"
+        isLoading={busyId === (confirmUser && confirmUser.id)}
+        onConfirm={handleConfirmDeactivate}
+        onClose={() => setConfirmUser(null)}
+      />
     </div>
   );
 };

@@ -15,6 +15,7 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'avatar' => $this->avatar ? Storage::disk('public')->url($this->avatar) : null,
+            'status' => $this->status ?? \App\Models\User::STATUS_ACTIVE,
             'email_verified_at' => $this->email_verified_at,
             'roles' => $this->whenLoaded('roles', fn () => $this->roles->pluck('slug')),
             'created_at' => $this->created_at,

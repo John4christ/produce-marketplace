@@ -20,6 +20,7 @@ class ReviewController extends Controller
     {
         $perPage = $request->integer('per_page', 15);
         $reviews = Review::forProduct($product->id)
+            ->with('user')
             ->orderByDesc('created_at')
             ->paginate($perPage);
 

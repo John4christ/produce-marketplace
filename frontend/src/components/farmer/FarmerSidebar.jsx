@@ -14,6 +14,7 @@ import {
 } from 'react-icons/fi';
 import { TbLeaf, TbTractor } from 'react-icons/tb';
 import { useAuth } from '../../context/AuthContext';
+import Avatar from '../common/Avatar';
 
 export const FarmerSidebar = ({ isCollapsed, onToggleCollapse, onOpenAddModal, cropsCount, ordersCount }) => {
   const location = useLocation();
@@ -53,9 +54,15 @@ export const FarmerSidebar = ({ isCollapsed, onToggleCollapse, onOpenAddModal, c
 
       {!isCollapsed && (
         <div className="sidebar-farmer-pill">
-          <div className="pill-avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-amber)', color: '#fff', borderRadius: '50%', width: '40px', height: '40px', fontSize: '16px', fontWeight: 600 }}>
-            {user?.name?.charAt(0)?.toUpperCase() || 'F'}
-          </div>
+          <Avatar
+            src={user?.avatar}
+            name={user?.name}
+            alt={user?.name}
+            className="pill-avatar"
+            fallbackBg="var(--color-amber)"
+            fallbackSize={16}
+            fallbackWeight={600}
+          />
           <div className="pill-meta">
             <span className="pill-name">{user?.name || 'Farmer'}</span>
             <span className="pill-role text-amber">Certified Organic Farmer</span>

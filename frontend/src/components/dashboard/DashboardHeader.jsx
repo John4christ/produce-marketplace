@@ -15,6 +15,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { Badge } from '../common/Badge';
+import Avatar from '../common/Avatar';
 
 export const DashboardHeader = ({ onSearchChange, searchQuery = '' }) => {
   const { isDark, toggleTheme } = useTheme();
@@ -54,7 +55,6 @@ export const DashboardHeader = ({ onSearchChange, searchQuery = '' }) => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
-  const userInitial = user?.name?.charAt(0)?.toUpperCase() || 'U';
   const userRole = user?.roles?.[0]?.slug || 'buyer';
 
   return (
@@ -133,9 +133,15 @@ export const DashboardHeader = ({ onSearchChange, searchQuery = '' }) => {
               }}
               aria-label="Profile menu"
             >
-              <div className="dash-user-avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-primary)', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', fontSize: '14px', fontWeight: 600 }}>
-                {userInitial}
-              </div>
+              <Avatar
+                src={user.avatar}
+                name={user.name}
+                alt={user.name}
+                className="dash-user-avatar"
+                fallbackBg="var(--color-primary)"
+                fallbackSize={14}
+                fallbackWeight={600}
+              />
               <span className="dash-user-name">{user.name.split(' ')[0]}</span>
             </button>
 

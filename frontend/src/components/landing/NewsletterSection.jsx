@@ -45,7 +45,7 @@ export const NewsletterSection = () => {
             <div className="newsletter-badge">
               <FiMail /> <span>Weekly Farm Gazette</span>
             </div>
-            <h2 className="newsletter-title">Get $10 Off Your First Harvest Basket</h2>
+            <h2 className="newsletter-title">Get ₦10 Off Your First Harvest Basket</h2>
             <p className="newsletter-desc">
               Subscribe for seasonal crop alerts, organic recipe guides, and exclusive weekend farm box discounts. Zero spam ever.
             </p>
@@ -53,7 +53,7 @@ export const NewsletterSection = () => {
             {isSubscribed ? (
               <div className="subscribed-success">
                 <FiCheck className="success-icon" />
-                <span>You are subscribed! Check your inbox for your $10 discount voucher code.</span>
+                <span>You are subscribed! Check your inbox for your ₦10 discount voucher code.</span>
               </div>
             ) : (
               <form className="newsletter-form" onSubmit={handleSubmit}>

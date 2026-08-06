@@ -69,7 +69,7 @@ export const CartPage = () => {
       setAppliedCoupon({ code: 'FARM10', label: '10% off farm orders' });
       toast.success('Coupon FARM10 applied!');
     } else if (normalized === 'HARVEST5') {
-      setAppliedCoupon({ code: 'HARVEST5', label: '$5 off your order' });
+      setAppliedCoupon({ code: 'HARVEST5', label: '₦5 off your order' });
       toast.success('Coupon HARVEST5 applied!');
     } else {
       setAppliedCoupon(null);

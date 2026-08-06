@@ -176,6 +176,24 @@
   object-fit: cover;
 }
 
+.avatar-small {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.user-cell .user-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.user-cell .user-meta strong {
+  white-space: nowrap;
+}
+
 .user-meta-desktop {
   display: flex;
   flex-direction: column;
@@ -281,6 +299,16 @@
   }
 }
 
+.btn-danger {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+
+  &:hover:not(:disabled) {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+}
+
 .btn-ghost {
   background: transparent;
   color: var(--text-muted);
@@ -318,6 +346,8 @@
 
 .badge-primary { background: var(--primary-100); color: var(--primary-800); }
 .badge-amber { background: #fef3c7; color: #b45309; }
+.badge-green { background: var(--primary-100); color: var(--primary-800); }
+.badge-red { background: #fee2e2; color: #b91c1c; }
 .badge-sm { padding: 0.25rem 0.5rem; font-size: 0.7rem; }
 .badge-md { padding: 0.35rem 0.7rem; font-size: 0.75rem; }
 

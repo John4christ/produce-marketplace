@@ -150,7 +150,7 @@ export const CheckoutPage = () => {
       setAppliedCoupon({ code: 'FARM10', label: '10% off farm orders' });
       toast.success('Coupon FARM10 applied!');
     } else if (normalized === 'HARVEST5') {
-      setAppliedCoupon({ code: 'HARVEST5', label: '$5 off your order' });
+      setAppliedCoupon({ code: 'HARVEST5', label: '₦5 off your order' });
       toast.success('Coupon HARVEST5 applied!');
     } else {
       setAppliedCoupon(null);
@@ -552,7 +552,7 @@ export const CheckoutPage = () => {
             </div>
             <div className="summary-row">
               <span>Coupon</span>
-              <strong>{appliedCoupon ? `-${formatCurrency(couponDiscount)}` : '$0.00'}</strong>
+              <strong>{appliedCoupon ? `-${formatCurrency(couponDiscount)}` : formatCurrency(0)}</strong>
             </div>
             <div className="summary-row total-row">
               <span>Total</span>

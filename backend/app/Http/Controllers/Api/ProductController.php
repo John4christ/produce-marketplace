@@ -8,7 +8,9 @@ use App\Http\Resources\ProductCollection;
 use App\Http\Resources\ProductResource;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\User;
 use App\Policies\ProductPolicy;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,8 +19,11 @@ use Illuminate\Validation\ValidationException;
 
 class ProductController extends Controller
 {
+    use AuthorizesRequests;
     public function index(Request $request): JsonResponse
     {
+        $isFarmerOrAdmin = $request->user() && ($request->user()->hasRole('farmer') || $request->user()->hasRole('admin'));
+
         $query = Product::query()
             ->with(['farmer', 'category', 'images'])
             ->when($request->filled('search'), function ($query) use ($request) {
@@ -50,8 +55,12 @@ class ProductController extends Controller
                 $query->where('farmer_id', Auth::id());
             });
 
-        if (!$request->filled('status') && (!$request->user() || (!$request->user()->hasRole('farmer') && !$request->user()->hasRole('admin')))) {
+        if (!$request->filled('status') && !$isFarmerOrAdmin) {
             $query->where('status', 'published');
+        }
+
+        if (!$isFarmerOrAdmin) {
+            $query->whereHas('farmer', fn ($q) => $q->where('status', User::STATUS_ACTIVE));
         }
 
         $perPage = $request->integer('per_page', 15);
@@ -83,8 +92,15 @@ class ProductController extends Controller
         ], 201);
     }
 
-    public function show(Product $product): JsonResponse
+    public function show(Request $request, Product $product): JsonResponse
     {
+        $user = $request->user();
+        $isOwner = $user && $product->farmer_id === $user->id;
+
+        if ($product->farmer && !$product->farmer->isActive() && !$isOwner) {
+            abort(404, 'Product not found.');
+        }
+
         return response()->json([
             'success' => true,
             'data' => new ProductResource($product->load('farmer', 'category', 'images')),
