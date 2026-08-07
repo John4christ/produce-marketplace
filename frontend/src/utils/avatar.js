@@ -1,6 +1,7 @@
 const getApiOrigin = () => {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
-  return baseUrl.replace(/\/+$/, "").replace(/\/api\/?$/, "");
+const baseUrl =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://produce-marketplace-production.up.railway.app/api";  return baseUrl.replace(/\/+$/, "").replace(/\/api\/?$/, "");
 };
 
 export const getAvatarUrl = (avatar) => {
