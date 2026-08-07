@@ -207,12 +207,12 @@ class AuthController extends Controller
         $validated = $request->validated();
 
         $status = Password::reset(
-            [
-                'email' => $validated['email'],
-                'password' => $validated['password'],
-                'password_confirmation' => $validated['password_confirmation'],
-                'token' => $validated['token'],
-            ],
+    $request->only(
+        'email',
+        'password',
+        'password_confirmation',
+        'token'
+    ),
             function ($user, $password) {
                 $user->forceFill([
                     'password' => Hash::make($password),
