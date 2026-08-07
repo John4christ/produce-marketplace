@@ -6,9 +6,12 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:3000', 
-    'http://127.0.0.1:3000', 
-    'https://produce-marketplace-nine.vercel.app',],
+    'allowed_origins' => [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'https://produce-marketplace-nine.vercel.app',
+        'https://produce-marketplace-nglwnl505-john4christs-projects.vercel.app',
+    ],
 
     'allowed_origins_patterns' => [],
 
