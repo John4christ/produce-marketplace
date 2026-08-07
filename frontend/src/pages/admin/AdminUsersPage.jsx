@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { FiSearch, FiUser, FiEdit3, FiUserX, FiUserCheck, FiAlertTriangle } from 'react-icons/fi';
+import { FiSearch, FiUser, FiEye, FiEdit3, FiUserX, FiUserCheck, FiAlertTriangle } from 'react-icons/fi';
 import { apiClient } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
@@ -24,10 +24,12 @@ export const AdminUsersPage = () => {
   const [confirmUser, setConfirmUser] = useState(null);
   const { user: currentUser } = useAuth();
 
-  const fetchUsers = useCallback(async () => {
+  const fetchUsers = useCallback(async (silent = false) => {
     try {
-      setLoading(true);
-      setError(null);
+      if (!silent) {
+        setLoading(true);
+        setError(null);
+      }
       const params = { page, per_page: perPage, search: search || undefined, role: role || undefined, sort };
       const res = await apiClient.get('/admin/users', { params });
       const finalItems = Array.isArray(res?.data?.data) ? res.data.data : Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
@@ -35,9 +37,9 @@ export const AdminUsersPage = () => {
       setUsers(finalItems);
       setTotal(res?.meta?.total ?? res?.data?.meta?.total ?? 0);
     } catch (err) {
-      setError(err.message || 'Failed to load users');
+      if (!silent) setError(err.message || 'Failed to load users');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [page, perPage, search, role, sort]);
 
@@ -47,9 +49,22 @@ export const AdminUsersPage = () => {
 
   const isSelf = (u) => currentUser && u.id === currentUser.id;
 
+  const isAdminUser = (u) => (Array.isArray(u.roles) ? u.roles.includes('admin') : u.roles === 'admin');
+
+  const isLastActiveAdmin = (u) => {
+    if (!isAdminUser(u)) return false;
+    if (total !== users.length) return false;
+    const activeAdmins = users.filter((x) => isAdminUser(x) && x.status !== 'inactive');
+    return activeAdmins.length === 1 && activeAdmins[0].id === u.id;
+  };
+
   const handleDeactivateRequest = (user) => {
     if (isSelf(user)) {
       toast.error('You cannot deactivate your own account.');
+      return;
+    }
+    if (isLastActiveAdmin(user)) {
+      toast.error('You cannot deactivate the last remaining admin account.');
       return;
     }
     setConfirmUser(user);
@@ -62,7 +77,7 @@ export const AdminUsersPage = () => {
       await apiClient.post(`/admin/users/${confirmUser.id}/deactivate`);
       toast.success(`${confirmUser.name}'s account has been deactivated.`);
       setConfirmUser(null);
-      fetchUsers();
+      fetchUsers(true);
     } catch (err) {
       toast.error(err?.response?.data?.message || err.message || 'Failed to deactivate user');
       setConfirmUser(null);
@@ -76,7 +91,7 @@ export const AdminUsersPage = () => {
       setBusyId(user.id);
       await apiClient.post(`/admin/users/${user.id}/reactivate`);
       toast.success(`${user.name}'s account has been reactivated.`);
-      fetchUsers();
+      fetchUsers(true);
     } catch (err) {
       toast.error(err?.response?.data?.message || err.message || 'Failed to reactivate user');
     } finally {
@@ -175,9 +190,11 @@ export const AdminUsersPage = () => {
                   <td>{new Date(u.created_at).toLocaleDateString()}</td>
                   <td>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <Button variant="outline" size="sm" onClick={() => window.alert('View not implemented yet')} icon={FiEdit3}>View</Button>
+                      <Button variant="outline" size="sm" onClick={() => window.alert('View not implemented yet')} icon={FiEye}>View</Button>
+                      <Button variant="ghost" size="sm" onClick={() => window.alert('Edit placeholder')} icon={FiEdit3}>Edit</Button>
                       {u.status === 'inactive' ? (
                         <Button
+                          type="button"
                           variant="primary"
                           size="sm"
                           onClick={() => handleReactivate(u)}
@@ -189,6 +206,7 @@ export const AdminUsersPage = () => {
                         </Button>
                       ) : (
                         <Button
+                          type="button"
                           variant="danger"
                           size="sm"
                           onClick={() => handleDeactivateRequest(u)}

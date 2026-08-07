@@ -56,8 +56,7 @@ class ProductController extends Controller
             });
 
         if (!$request->filled('status') && !$isFarmerOrAdmin) {
-            $query->where('status', 'published');
-        }
+$query->where('status', 'approved');        }
 
         if (!$isFarmerOrAdmin) {
             $query->whereHas('farmer', fn ($q) => $q->where('status', User::STATUS_ACTIVE));
@@ -77,8 +76,7 @@ class ProductController extends Controller
         $validated = $request->validated();
 
         $validated['farmer_id'] = $request->user()->id;
-        $validated['status'] = $validated['status'] ?? 'published';
-
+$validated['status'] = 'pending';
         $product = Product::create($validated);
 
         if ($request->hasFile('images')) {
@@ -113,6 +111,14 @@ class ProductController extends Controller
 
         $validated = $request->validated();
 
+        // Re-editing a reviewed product sends it back into the admin approval queue.
+        if (in_array($product->status, ['approved', 'rejected'], true)) {
+            $validated['status'] = 'pending';
+            $validated['rejection_reason'] = null;
+            $validated['approved_by'] = null;
+            $validated['approved_at'] = null;
+        }
+
         $product->update($validated);
 
         if ($request->hasFile('images')) {
@@ -137,6 +143,54 @@ class ProductController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Product deleted successfully.',
+        ]);
+    }
+
+    public function approve(Request $request, Product $product): JsonResponse
+    {
+        if ($product->status === 'approved') {
+            return response()->json([
+                'success' => false,
+                'message' => 'This product is already approved.',
+            ], 422);
+        }
+
+        $product->update([
+            'status' => 'approved',
+            'approved_by' => $request->user()->id,
+            'approved_at' => now(),
+            'rejection_reason' => null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product approved successfully.',
+            'data' => new ProductResource($product->load('farmer', 'category', 'images')),
+        ]);
+    }
+
+    public function reject(Request $request, Product $product): JsonResponse
+    {
+        if ($product->status === 'rejected') {
+            return response()->json([
+                'success' => false,
+                'message' => 'This product is already rejected.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'rejection_reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $product->update([
+            'status' => 'rejected',
+            'rejection_reason' => $validated['rejection_reason'] ?? null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product rejected successfully.',
+            'data' => new ProductResource($product->load('farmer', 'category', 'images')),
         ]);
     }
 

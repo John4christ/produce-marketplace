@@ -22,12 +22,16 @@ class Product extends Model
         'quantity_available',
         'status',
         'tags',
+        'approved_by',
+        'approved_at',
+        'rejection_reason',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'quantity_available' => 'integer',
         'tags' => 'array',
+        'approved_at' => 'datetime',
     ];
 
     public function farmer(): BelongsTo
@@ -58,5 +62,10 @@ class Product extends Model
     public function primaryImage(): HasOne
     {
         return $this->hasOne(ProductImage::class)->orderBy('sort_order');
+    }
+
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 }

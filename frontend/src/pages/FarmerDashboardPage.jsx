@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { apiClient } from "../services/api";
 import AddProductModal from "../components/farmer/AddProductModal";
+import ViewProductModal from "../components/farmer/ViewProductModal";
 import { FarmerSidebar } from "../components/farmer/FarmerSidebar";
 import { DashboardHeader } from "../components/dashboard/DashboardHeader";
 import { Badge } from "../components/common/Badge";
@@ -20,6 +21,8 @@ import {
   FiBell,
   FiEdit3,
   FiTrash2,
+  FiEye,
+  FiRotateCcw,
   FiTrendingUp,
   FiDollarSign,
   FiSettings,
@@ -39,6 +42,7 @@ export const FarmerDashboardPage = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [viewingProduct, setViewingProduct] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
   const currentView = location.pathname;
@@ -176,6 +180,14 @@ export const FarmerDashboardPage = () => {
     setEditModalOpen(true);
   };
 
+  const openViewProduce = (product) => {
+    setViewingProduct(product);
+  };
+
+  const closeViewModal = () => {
+    setViewingProduct(null);
+  };
+
   const handleDeleteProduct = async (productId) => {
     try {
       setDeletingId(productId);
@@ -254,6 +266,22 @@ export const FarmerDashboardPage = () => {
         return "amber";
       default:
         return "primary";
+    }
+  };
+
+  const getApprovalStatus = (status) => {
+    switch (status?.toLowerCase()) {
+      case "approved":
+        return { variant: "green", label: "Approved" };
+      case "rejected":
+        return { variant: "red", label: "Rejected" };
+      case "pending":
+        return { variant: "amber", label: "Pending Approval" };
+      default:
+        return {
+          variant: "primary",
+          label: status ? status.charAt(0).toUpperCase() + status.slice(1) : "Unknown",
+        };
     }
   };
 
@@ -486,7 +514,7 @@ export const FarmerDashboardPage = () => {
                         <h3 className="section-title-sm">Active Product Listings</h3>
                         <p className="text-muted text-sm">Track stock, sales, and pricing for your harvest inventory.</p>
                       </div>
-                      <Badge variant="primary" size="sm">{products.length} active</Badge>
+                      <Badge variant="primary" size="sm">{products.length} products</Badge>
                     </div>
                     <div className="product-table-wrapper">
                       <table className="product-table">
@@ -497,29 +525,91 @@ export const FarmerDashboardPage = () => {
                             <th>Quantity</th>
                             <th>Unit</th>
                             <th>Price</th>
+                            <th>Status</th>
                             <th>Actions</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {products.map((product) => (
-                            <tr key={product.id}>
-                              <td>{product.name}</td>
-                              <td>{product.category?.name ?? "No Category"}</td>
-                              <td>{product.quantity_available ?? 0}</td>
-                              <td>{product.unit}</td>
-                              <td className="font-semibold">{formatCurrency(product.price)}</td>
-                              <td>
-                                <div className="flex gap-2">
-                                  <Button variant="outline" size="sm" icon={FiEdit3} onClick={() => openEditProduce(product)}>
-                                    Edit
-                                  </Button>
-                                  <Button variant="outline" size="sm" icon={FiTrash2} isLoading={deletingId === product.id} onClick={() => handleDeleteProduct(product.id)}>
-                                    Delete
-                                  </Button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
+                          {products.map((product) => {
+                            const approval = getApprovalStatus(product.status);
+                            return (
+                              <tr key={product.id}>
+                                <td>{product.name}</td>
+                                <td>{product.category?.name ?? "No Category"}</td>
+                                <td>{product.quantity_available ?? 0}</td>
+                                <td>{product.unit}</td>
+                                <td className="font-semibold">{formatCurrency(product.price)}</td>
+                                <td>
+                                  <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
+                                    <Badge variant={approval.variant}>{approval.label}</Badge>
+                                    {product.status === "rejected" && product.rejection_reason && (
+                                      <span
+                                        title={product.rejection_reason}
+                                        style={{
+                                          display: "inline-block",
+                                          maxWidth: 200,
+                                          overflow: "hidden",
+                                          textOverflow: "ellipsis",
+                                          whiteSpace: "nowrap",
+                                          fontSize: "0.75rem",
+                                          color: "#dc2626",
+                                          fontWeight: 600,
+                                        }}
+                                      >
+                                        Reason: {product.rejection_reason}
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td>
+                                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                    <Button variant="outline" size="sm" icon={FiEye} onClick={() => openViewProduce(product)}>
+                                      View
+                                    </Button>
+                                    {product.status === "approved" || (product.status !== "pending" && product.status !== "rejected") ? (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        icon={FiEdit3}
+                                        title={product.status === "approved" ? "Editing an approved product sends it back for admin review." : undefined}
+                                        onClick={() => openEditProduce(product)}
+                                      >
+                                        Edit
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        icon={FiEdit3}
+                                        isDisabled
+                                        title={
+                                          product.status === "pending"
+                                            ? "Products awaiting approval cannot be edited until reviewed."
+                                            : "Rejected products must be resubmitted before they can be edited."
+                                        }
+                                      >
+                                        Edit
+                                      </Button>
+                                    )}
+                                    {product.status === "rejected" && (
+                                      <Button variant="amber" size="sm" icon={FiRotateCcw} onClick={() => openEditProduce(product)}>
+                                        Resubmit
+                                      </Button>
+                                    )}
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      icon={FiTrash2}
+                                      isLoading={deletingId === product.id}
+                                      onClick={() => handleDeleteProduct(product.id)}
+                                    >
+                                      Delete
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
@@ -619,6 +709,8 @@ export const FarmerDashboardPage = () => {
         onSuccess={handleModalSuccess}
         editProduct={editingProduct}
       />
+
+      <ViewProductModal product={viewingProduct} onClose={closeViewModal} />
     </>
   );
 };

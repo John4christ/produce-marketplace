@@ -7,6 +7,7 @@ import { apiClient } from "../../services/api";
 
 const AddProductModal = ({ isOpen, onClose, onSuccess, editProduct = null }) => {
   const isEdit = !!editProduct;
+  const wasReviewed = isEdit && ["approved", "rejected"].includes(editProduct.status);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -51,7 +52,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editProduct = null }) => 
         price: editProduct.price || "",
         unit: editProduct.unit || "kg",
         quantity_available: editProduct.quantity_available || "",
-        status: editProduct.status || "published",
+        status: ["draft", "published", "archived"].includes(editProduct.status) ? editProduct.status : "published",
         tags: Array.isArray(editProduct.tags) ? editProduct.tags.join(", ") : "",
       });
       const primaryImage = editProduct.images?.find(img => img.sort_order === 1) || editProduct.images?.[0];
@@ -152,7 +153,13 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editProduct = null }) => 
 
       const response = await apiClient.post(url, formData);
 
-      toast.success(isEdit ? "Product updated successfully" : "Product added successfully");
+      toast.success(
+        isEdit
+          ? wasReviewed
+            ? "Product updated and sent back for admin review."
+            : "Product updated successfully"
+          : "Product added successfully"
+      );
       onSuccess?.();
       onClose();
     } catch (err) {

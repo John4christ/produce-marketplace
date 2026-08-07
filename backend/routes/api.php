@@ -163,6 +163,12 @@ Route::middleware('throttle:60,1')
             Route::delete('/{product}', [App\Http\Controllers\Api\ProductController::class, 'destroy'])
                 ->middleware(CheckRole::class . ':farmer|admin');
 
+            Route::patch('/{product}/approve', [App\Http\Controllers\Api\ProductController::class, 'approve'])
+                ->middleware(CheckRole::class . ':admin');
+
+            Route::patch('/{product}/reject', [App\Http\Controllers\Api\ProductController::class, 'reject'])
+                ->middleware(CheckRole::class . ':admin');
+
         });
 
     });

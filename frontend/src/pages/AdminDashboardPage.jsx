@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiGrid, FiUsers, FiPackage, FiShoppingCart, FiBarChart2, FiBell, FiSettings, FiTrendingUp, FiClipboard, FiShield, FiUser, FiUserX, FiUserCheck, FiAlertTriangle } from 'react-icons/fi';
+import { FiGrid, FiUsers, FiPackage, FiShoppingCart, FiBarChart2, FiBell, FiSettings, FiTrendingUp, FiClipboard, FiShield, FiUser, FiEye, FiEdit3, FiUserX, FiUserCheck, FiAlertTriangle, FiCheck, FiX } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { DashboardHeader } from '../components/dashboard/DashboardHeader';
 import { Badge } from '../components/common/Badge';
@@ -27,6 +27,9 @@ export const AdminDashboardPage = () => {
   const [topFarmers, setTopFarmers] = useState([]);
   const [busyId, setBusyId] = useState(null);
   const [confirmUser, setConfirmUser] = useState(null);
+  const [productBusyId, setProductBusyId] = useState(null);
+  const [rejectProduct, setRejectProduct] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
 
   const fetchDashboard = async () => {
     try {
@@ -58,11 +61,37 @@ export const AdminDashboardPage = () => {
     fetchDashboard();
   }, []);
 
+  const fetchAdminProducts = async () => {
+    try {
+      const productsRes = await apiClient.get('/admin/products', { params: { per_page: 10 } });
+      setProducts(Array.isArray(productsRes?.data?.data) ? productsRes.data.data : (Array.isArray(productsRes?.data) ? productsRes.data : []));
+    } catch (err) {
+      toast.error(err.message || 'Failed to refresh products');
+    }
+  };
+
+  const refreshUsersSilently = async () => {
+    try {
+      const usersRes = await apiClient.get('/admin/users', { params: { per_page: 10 } });
+      setUsers(Array.isArray(usersRes?.data?.data) ? usersRes.data.data : (Array.isArray(usersRes?.data) ? usersRes.data : []));
+    } catch (err) {
+      toast.error(err.message || 'Failed to refresh users');
+    }
+  };
+
   const isSelf = (u) => user && u.id === user.id;
+
+  const isAdminUser = (u) => (Array.isArray(u.roles) ? u.roles.includes('admin') : u.roles === 'admin');
+
+  const isLastActiveAdmin = (u) => isAdminUser(u) && Number(stats?.users?.admins || 0) === 1;
 
   const handleDeactivateRequest = (u) => {
     if (isSelf(u)) {
       toast.error('You cannot deactivate your own account.');
+      return;
+    }
+    if (isLastActiveAdmin(u)) {
+      toast.error('You cannot deactivate the last remaining admin account.');
       return;
     }
     setConfirmUser(u);
@@ -75,7 +104,7 @@ export const AdminDashboardPage = () => {
       await apiClient.post(`/admin/users/${confirmUser.id}/deactivate`);
       toast.success(`${confirmUser.name}'s account has been deactivated.`);
       setConfirmUser(null);
-      fetchDashboard();
+      refreshUsersSilently();
     } catch (err) {
       toast.error(err?.response?.data?.message || err.message || 'Failed to deactivate user');
       setConfirmUser(null);
@@ -89,11 +118,51 @@ export const AdminDashboardPage = () => {
       setBusyId(u.id);
       await apiClient.post(`/admin/users/${u.id}/reactivate`);
       toast.success(`${u.name}'s account has been reactivated.`);
-      fetchDashboard();
+      refreshUsersSilently();
     } catch (err) {
       toast.error(err?.response?.data?.message || err.message || 'Failed to reactivate user');
     } finally {
       setBusyId(null);
+    }
+  };
+
+  const handleApproveProduct = async (product) => {
+    try {
+      setProductBusyId(product.id);
+      await apiClient.patch(`/products/${product.id}/approve`);
+      toast.success(`${product.name} has been approved and is now visible to buyers.`);
+      fetchAdminProducts();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err.message || 'Failed to approve product');
+    } finally {
+      setProductBusyId(null);
+    }
+  };
+
+  const handleRejectRequest = (product) => {
+    setRejectReason('');
+    setRejectProduct(product);
+  };
+
+  const closeRejectModal = () => {
+    setRejectProduct(null);
+    setRejectReason('');
+  };
+
+  const handleConfirmReject = async () => {
+    if (!rejectProduct) return;
+    try {
+      setProductBusyId(rejectProduct.id);
+      await apiClient.patch(`/products/${rejectProduct.id}/reject`, {
+        rejection_reason: rejectReason.trim() || null,
+      });
+      toast.success(`${rejectProduct.name} has been rejected and remains hidden from buyers.`);
+      closeRejectModal();
+      fetchAdminProducts();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err.message || 'Failed to reject product');
+    } finally {
+      setProductBusyId(null);
     }
   };
 
@@ -434,10 +503,11 @@ export const AdminDashboardPage = () => {
                             <td>{userRow.created_at ? new Date(userRow.created_at).toLocaleDateString() : '-'}</td>
                             <td>
                               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                <Button variant="outline" size="sm" onClick={() => window.alert('View not implemented yet')} icon={FiEdit3}>View</Button>
+                                <Button variant="outline" size="sm" onClick={() => window.alert('View not implemented yet')} icon={FiEye}>View</Button>
                                 <Button variant="ghost" size="sm" onClick={() => window.alert('Edit placeholder')} icon={FiEdit3}>Edit</Button>
                                 {userRow.status === 'inactive' ? (
                                   <Button
+                                    type="button"
                                     variant="primary"
                                     size="sm"
                                     onClick={() => handleReactivate(userRow)}
@@ -449,6 +519,7 @@ export const AdminDashboardPage = () => {
                                   </Button>
                                 ) : (
                                   <Button
+                                    type="button"
                                     variant="danger"
                                     size="sm"
                                     onClick={() => handleDeactivateRequest(userRow)}
@@ -499,6 +570,7 @@ export const AdminDashboardPage = () => {
                           <th>Price</th>
                           <th>Stock</th>
                           <th>Status</th>
+                          <th>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -510,12 +582,86 @@ export const AdminDashboardPage = () => {
                             <td>{formatCurrency(product.price)}</td>
                             <td>{product.quantity_available}</td>
                             <td><Badge variant={getStatusBadgeVariant(product.status)}>{product.status}</Badge></td>
+                            <td>
+                              {product.status === 'pending' ? (
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    icon={FiCheck}
+                                    isLoading={productBusyId === product.id}
+                                    onClick={() => handleApproveProduct(product)}
+                                  >
+                                    Approve
+                                  </Button>
+                                  <Button
+                                    variant="danger"
+                                    size="sm"
+                                    icon={FiX}
+                                    isDisabled={productBusyId === product.id}
+                                    onClick={() => handleRejectRequest(product)}
+                                  >
+                                    Reject
+                                  </Button>
+                                </div>
+                              ) : (
+                                <span className="text-muted text-sm">—</span>
+                              )}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
                 </section>
+              )}
+
+              {rejectProduct && (
+                <div className="modal-backdrop" onClick={closeRejectModal}>
+                  <div
+                    className="modal-card confirm-modal"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Reject Product"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="modal-header">
+                      <h2>Reject Product</h2>
+                      <button type="button" className="modal-close-btn" aria-label="Close" onClick={closeRejectModal}>
+                        &times;
+                      </button>
+                    </div>
+                    <div className="confirm-modal-body">
+                      <span className="confirm-modal-icon danger"><FiAlertTriangle /></span>
+                      <p>
+                        Reject <strong>{rejectProduct.name}</strong>? The product will stay hidden from buyers.
+                        You may add an optional reason below for the farmer.
+                      </p>
+                    </div>
+                    <div className="form-group" style={{ marginTop: 16 }}>
+                      <label className="input-label">Rejection reason (optional)</label>
+                      <textarea
+                        rows={3}
+                        value={rejectReason}
+                        onChange={(e) => setRejectReason(e.target.value)}
+                        placeholder="e.g. Missing quality details, unclear pricing, image issue..."
+                        maxLength={500}
+                      />
+                    </div>
+                    <div className="modal-actions">
+                      <Button variant="ghost" onClick={closeRejectModal} isDisabled={productBusyId === rejectProduct.id}>
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="danger"
+                        onClick={handleConfirmReject}
+                        isLoading={productBusyId === rejectProduct.id}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               )}
 
               {activeSection === 'orders' && (

@@ -17,6 +17,9 @@ class ProductResource extends JsonResource
             'unit' => $this->unit,
             'quantity_available' => $this->quantity_available,
             'status' => $this->status,
+            'approved_by' => $this->approved_by,
+            'approved_at' => $this->approved_at,
+            'rejection_reason' => $this->rejection_reason,
             'tags' => $this->tags,
             'farmer' => $this->whenLoaded('farmer', fn () => [
                 'id' => $this->farmer->id,
