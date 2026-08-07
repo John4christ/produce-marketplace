@@ -155,12 +155,7 @@ export const DashboardHeader = ({ onSearchChange, searchQuery = '' }) => {
                   </Badge>
                 </div>
                 <div className="dropdown-divider" />
-                <button className="dropdown-item">
-                  <FiUser /> <span>Profile Settings</span>
-                </button>
-                <button className="dropdown-item">
-                  <FiSettings /> <span>Preferences</span>
-                </button>
+  
                 <div className="dropdown-divider" />
                 <button className="dropdown-item red-text" onClick={logout}>
                   <FiLogOut /> <span>Sign Out</span>

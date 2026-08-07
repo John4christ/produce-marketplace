@@ -3,6 +3,38 @@ import { Link } from 'react-router-dom';
 import { FiShield, FiTruck, FiHeart } from 'react-icons/fi';
 import { TbLeaf } from 'react-icons/tb';
 
+const footerColumns = [
+  {
+    heading: 'Marketplace',
+    links: [
+      { label: 'Home', to: '/' },
+      { label: 'Products', to: '/products' },
+      { label: 'Categories', to: '/categories' },
+    ],
+  },
+  {
+    heading: 'For Growers',
+    links: [
+      { label: 'Become a Farmer', to: '/register' },
+      { label: 'Farmer Login', to: '/login' },
+    ],
+  },
+  {
+    heading: 'Company',
+    links: [
+      { label: 'About Us', to: '/about' },
+      { label: 'Contact Us', to: '/contact' },
+    ],
+  },
+  {
+    heading: 'Legal',
+    links: [
+      { label: 'Privacy Policy', to: '/privacy' },
+      { label: 'Terms of Service', to: '/terms' },
+    ],
+  },
+];
+
 export const Footer = () => {
   return (
     <footer className="footer-container" id="about-us">
@@ -31,39 +63,18 @@ export const Footer = () => {
             </div>
           </div>
 
-          {/* Quick Links */}
-          <div className="footer-col">
-            <h4 className="footer-heading">Fresh Marketplace</h4>
-            <ul className="footer-links">
-              <li><a href="#popular-harvest">Organic Vegetables</a></li>
-              <li><a href="#popular-harvest">Sun-Ripened Fruits</a></li>
-              <li><a href="#popular-harvest">Pasture Eggs & Dairy</a></li>
-              <li><a href="#popular-harvest">Raw Wildflower Honey</a></li>
-              <li><a href="#popular-harvest">Fresh Microgreens</a></li>
-            </ul>
-          </div>
-
-          {/* Partner Farmers */}
-          <div className="footer-col">
-            <h4 className="footer-heading">For Growers</h4>
-            <ul className="footer-links">
-              <li><a href="#meet-farmers">Become a Partner Farmer</a></li>
-              <li><a href="#meet-farmers">Farmer Portal Login</a></li>
-              <li><a href="#meet-farmers">Organic Certification Standards</a></li>
-              <li><a href="#about-us">Fair Pricing Commitment</a></li>
-            </ul>
-          </div>
-
-          {/* Security & Support */}
-          <div className="footer-col">
-            <h4 className="footer-heading">Trust & Security</h4>
-            <ul className="footer-links">
-              <li><a href="#privacy">Privacy & Data Security</a></li>
-              <li><a href="#terms">Terms of Service</a></li>
-              <li><a href="#refunds">100% Fresh Guarantee Policy</a></li>
-              <li><a href="#support">Help Center & Contact</a></li>
-            </ul>
-          </div>
+          {footerColumns.map((col) => (
+            <div className="footer-col" key={col.heading}>
+              <h4 className="footer-heading">{col.heading}</h4>
+              <ul className="footer-links">
+                {col.links.map((link) => (
+                  <li key={link.label}>
+                    <Link to={link.to}>{link.label}</Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
         <div className="footer-bottom">

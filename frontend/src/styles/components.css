@@ -1127,7 +1127,7 @@
 
 .footer-top-grid {
   display: grid;
-  grid-template-columns: 1.5fr repeat(3, 1fr);
+  grid-template-columns: 1.5fr repeat(4, 1fr);
   gap: 3rem;
   margin-bottom: 3rem;
 }
@@ -1187,6 +1187,275 @@
 }
 
 .icon-red { color: #ef4444; }
+
+/* ----------------------------------------------------
+   STATIC INFO PAGES (ABOUT, CONTACT, LEGAL, PRODUCTS, CATEGORIES)
+---------------------------------------------------- */
+.static-page {
+  padding: 4.5rem 0 5.5rem;
+}
+
+.static-page-header {
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto 3rem;
+}
+
+.static-page-header .page-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+}
+
+.static-page-content {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.static-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 2.5rem;
+  box-shadow: var(--shadow-md);
+}
+
+.static-card h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 2rem 0 0.75rem;
+}
+
+.static-card h2:first-child {
+  margin-top: 0;
+}
+
+.static-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.static-card p {
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin-bottom: 1rem;
+}
+
+.static-list {
+  list-style: none;
+  margin: 0 0 1rem;
+}
+
+.static-list li {
+  position: relative;
+  color: var(--text-muted);
+  padding-left: 1.5rem;
+  margin-bottom: 0.6rem;
+  line-height: 1.6;
+}
+
+.static-list li::before {
+  content: '';
+  position: absolute;
+  left: 0.25rem;
+  top: 0.55rem;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--gradient-primary);
+}
+
+.inline-link {
+  color: var(--primary-600);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color var(--transition-fast);
+
+  &:hover {
+    color: var(--primary-700);
+  }
+}
+
+.static-highlights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.static-highlight {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+  padding: 1.25rem 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+}
+
+.static-highlight strong {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.static-highlight span {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Products page */
+.products-page .static-page-header {
+  margin-bottom: 2rem;
+}
+
+.products-toolbar {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.75rem;
+}
+
+.products-search {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+}
+
+.products-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 1.05rem;
+}
+
+.products-search-input {
+  width: 100%;
+  padding: 0.8rem 1rem 0.8rem 2.7rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  font-size: 0.95rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+  }
+
+  &::placeholder {
+    color: var(--text-light);
+  }
+}
+
+.products-filter-row {
+  margin-bottom: 1.5rem;
+}
+
+.products-count {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+/* Contact page */
+.contact-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.contact-info-card h2,
+.contact-form-card h2 {
+  margin-bottom: 0.75rem;
+}
+
+.contact-info-card p {
+  margin-bottom: 1.75rem;
+}
+
+.contact-info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.contact-info-row:last-of-type {
+  border-bottom: none;
+}
+
+.contact-info-row h3 {
+  margin-bottom: 0.25rem;
+}
+
+.contact-info-row p {
+  margin-bottom: 0;
+  font-size: 0.95rem;
+}
+
+.contact-info-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--primary-50);
+  color: var(--primary-700);
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.contact-form-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.contact-textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.contact-submit {
+  margin-top: 0.5rem;
+}
+
+.contact-success {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.contact-success-icon {
+  font-size: 3rem;
+}
+
+.contact-success h2 {
+  margin: 0;
+}
+
+.contact-success p {
+  max-width: 420px;
+  margin-bottom: 1rem;
+}
+
 
 /* ----------------------------------------------------
    AUTHENTICATION PAGES (LOGIN & REGISTER)
@@ -3697,6 +3966,17 @@
   .stats-grid { grid-template-columns: 1fr; }
   .footer-top-grid { grid-template-columns: 1fr; }
   .footer-bottom { flex-direction: column; gap: 1rem; text-align: center; }
+}
+
+@media (max-width: 1024px) {
+  .footer-top-grid { grid-template-columns: 1.5fr repeat(2, 1fr); }
+  .contact-layout { grid-template-columns: 1fr; }
+  .static-page-header .page-title { font-size: 2.1rem; }
+}
+
+@media (max-width: 560px) {
+  .footer-top-grid { grid-template-columns: 1fr 1fr; }
+  .static-card { padding: 1.75rem; }
 }
 
 /* ----------------------------------------------------

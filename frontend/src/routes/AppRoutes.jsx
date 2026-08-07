@@ -11,6 +11,12 @@ import { FarmerDashboardPage } from '../pages/FarmerDashboardPage';
 import { AdminDashboardPage } from '../pages/AdminDashboardPage';
 import AdminUsersPage from '../pages/admin/AdminUsersPage';
 import { ProductDetailsPage } from '../pages/ProductDetailsPage';
+import { ProductsPage } from '../pages/ProductsPage';
+import { CategoriesPage } from '../pages/CategoriesPage';
+import { AboutPage } from '../pages/AboutPage';
+import { ContactPage } from '../pages/ContactPage';
+import { PrivacyPolicyPage } from '../pages/PrivacyPolicyPage';
+import { TermsOfServicePage } from '../pages/TermsOfServicePage';
 import { CartPage } from '../pages/CartPage';
 import { CheckoutPage } from '../pages/CheckoutPage';
 import { OrderDetailsPage } from '../pages/OrderDetailsPage';
@@ -112,6 +118,54 @@ export const AppRoutes = () => {
         element={
           <MainLayout>
             <ProductDetailsPage />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/products"
+        element={
+          <MainLayout>
+            <ProductsPage />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/categories"
+        element={
+          <MainLayout>
+            <CategoriesPage />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/about"
+        element={
+          <MainLayout>
+            <AboutPage />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/contact"
+        element={
+          <MainLayout>
+            <ContactPage />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/privacy"
+        element={
+          <MainLayout>
+            <PrivacyPolicyPage />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/terms"
+        element={
+          <MainLayout>
+            <TermsOfServicePage />
           </MainLayout>
         }
       />
