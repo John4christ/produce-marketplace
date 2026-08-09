@@ -20,8 +20,12 @@ class CategorySeeder extends Seeder
             ['name' => 'Spices', 'slug' => 'spices'],
         ];
 
-        foreach ($categories as $category) {
-            Category::create($category);
-        }
-    }
+       foreach ($categories as $category) {
+    Category::firstOrCreate(
+        ['slug' => $category['slug']],
+        ['name' => $category['name']]
+    );
 }
+    
+    }
+}   
