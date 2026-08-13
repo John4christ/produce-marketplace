@@ -1141,6 +1141,7 @@
 
 .security-badges-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
 }
 
@@ -1980,17 +1981,6 @@
     grid-template-columns: 1fr;
   }
 }
-@media (max-width: 768px) {
-  .auth-layout {
-    grid-template-columns: 1fr;
-    padding: 1rem;
-    gap: 1rem;
-  }
-
-  .auth-banner {
-    display: none;
-  }
-}
 
 
 
@@ -2178,6 +2168,26 @@
   position: sticky;
   top: 0;
   z-index: 90;
+}
+
+.dash-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+
+  &:hover {
+    background: var(--border-color);
+  }
 }
 
 .dash-search-container {
@@ -3027,7 +3037,7 @@
   font-weight: 700;
 }
 
-.stat-value {
+.farmer-stat-card .stat-value {
   font-size: 1.9rem;
   font-weight: 800;
 }
@@ -3221,6 +3231,7 @@
 
 .gallery-thumbs-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.85rem;
   margin-top: 1rem;
 }
@@ -3884,12 +3895,6 @@
   align-items: center;
 }
 
-@media (max-width: 1100px) {
-  .farmer-dashboard-overview {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 900px) {
   .farmer-dashboard-grid {
     grid-template-columns: 1fr;
@@ -3950,73 +3955,40 @@
   }
 }
 
+.sidebar-backdrop {
+  display: none;
+}
+
+/* Mobile dashboard: sidebar is a permanent narrow icon rail
+   beside the content (not a slide-over drawer). */
 @media (max-width: 768px) {
   .dashboard-layout {
-    flex-direction: row;
-    align-items: stretch;
-    min-width: 0;
-    width: 100%;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
 
-  .dashboard-sidebar {
+  .dashboard-sidebar,
+  .dashboard-sidebar.collapsed {
     width: 64px;
-    min-width: 64px;
-    max-width: 64px;
-    flex: 0 0 64px;
     flex-shrink: 0;
-    height: 100vh;
     position: sticky;
     top: 0;
-    padding: 0.75rem 0.375rem;
+    height: 100vh;
+    padding: 1rem 0.5rem;
+    z-index: 100;
   }
 
-  .dashboard-main-content {
-    flex: 1 1 auto;
-    width: auto;
-    min-width: 0;
-    max-width: none;
-    margin: 0;
-    padding: 0;
+  .dashboard-sidebar.mobile-open,
+  .dashboard-sidebar.collapsed.mobile-open {
+    transform: none;
+    visibility: visible;
   }
 
-  .dashboard-top-nav {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0 0.75rem;
+  .sidebar-backdrop {
+    display: none;
   }
 
-  .dash-search-container {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    flex: 1 1 100%;
-  }
-
-  .dashboard-container {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0.75rem;
-  }
-
-  .dash-body-grid {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    box-sizing: border-box;
-  }
-
-  .dash-feed-column,
-  .dash-sidebar-column {
-    min-width: 0;
-    max-width: 100%;
-    box-sizing: border-box;
+  .dash-menu-btn {
+    display: none;
   }
 
   .sidebar-header {
@@ -4083,36 +4055,19 @@
     display: none;
   }
 
-  .dash-welcome-banner {
+  .dashboard-container {
     padding: 1.25rem;
-    margin-bottom: 1.25rem;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-
-  .dash-welcome-banner h1 {
-    font-size: 2rem;
-    line-height: 1.1;
-    margin-bottom: 0.75rem;
-  }
-
-  .dash-welcome-banner p {
-    font-size: 0.9rem;
-    line-height: 1.45;
-  }
-
-  .dash-welcome-banner .dash-stat-chips {
-    width: 100%;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-  }
-
-  .dash-welcome-banner .stat-chip {
-    flex: 1 1 120px;
-    min-width: 0;
   }
 }
+
+@media (max-width: 480px) {
+  .dashboard-sidebar,
+  .dashboard-sidebar.collapsed {
+    width: 56px;
+    padding: 0.75rem 0.25rem;
+  }
+}
+
 
 @media (max-width: 768px) {
   .desktop-nav, .nav-search-form, .user-meta-desktop { display: none; }
@@ -4130,10 +4085,13 @@
   .footer-top-grid { grid-template-columns: 1.5fr repeat(2, 1fr); }
   .contact-layout { grid-template-columns: 1fr; }
   .static-page-header .page-title { font-size: 2.1rem; }
+  .desktop-nav { gap: 1rem; }
+  .nav-search-form,
+  .user-meta-desktop { display: none; }
+  .nav-actions { gap: 0.6rem; }
 }
 
 @media (max-width: 560px) {
-  .footer-top-grid { grid-template-columns: 1fr 1fr; }
   .static-card { padding: 1.75rem; }
 }
 
@@ -4530,260 +4488,453 @@
   .checkout-buttons .btn-row {
     flex-direction: column;
   }
-
-  .checkout-summary-panel {
-    position: static;
-  }
-}
-/* =========================================================
-   CONSOLIDATED RESPONSIVE DESIGN
-   Applies to the entire application
-========================================================= */
-
-/* ---------------------------------------------------------
-   TABLET — 1100px and below
---------------------------------------------------------- */
-
-@media (max-width: 1100px) {
-
-  /* ---------- General ---------- */
-
-  .container,
-  .page-container,
-  .dashboard-container,
-  .checkout-page,
-  .cart-page {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-
-
-  /* ---------- Dashboard ---------- */
-
-  .dash-body-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-body-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-chart-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .farmer-dashboard-overview {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .farmer-dashboard-grid {
-    grid-template-columns: 1.5fr 1fr;
-  }
-
-  .product-details-grid,
-  .product-extra-grid {
-    grid-template-columns: 1fr;
-  }
-
-
-  /* ---------- Checkout ---------- */
-
-  .checkout-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .checkout-summary-panel {
-    position: static;
-  }
-
-
-  /* ---------- Cart ---------- */
-
-  .cart-grid {
-    grid-template-columns: 1fr;
-  }
-
-
-  /* ---------- Contact ---------- */
-
-  .contact-layout {
-    grid-template-columns: 1fr;
-  }
-
-
-  /* ---------- Footer ---------- */
-
-  .footer-top-grid {
-    grid-template-columns: 1.5fr repeat(2, 1fr);
-  }
 }
 
+/* ----------------------------------------------------
+   PAGE HEADER / BODY (ORDER DETAILS, SUCCESS, FAILED)
+---------------------------------------------------- */
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 2rem;
+  border-radius: var(--radius-xl);
+  margin-bottom: 2rem;
+}
 
-/* =========================================================
-   MOBILE — 768px and below
-========================================================= */
+.page-header h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin: 0.35rem 0 0;
+}
+
+.page-header p {
+  margin-top: 0.5rem;
+  max-width: 560px;
+}
+
+.page-body {
+  max-width: var(--container-max);
+  margin: 0 auto;
+}
+
+/* ----------------------------------------------------
+   ORDER DETAILS PAGE
+---------------------------------------------------- */
+.order-details-page {
+  padding: 2rem;
+  max-width: var(--container-max);
+  margin: 0 auto;
+}
+
+.order-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.order-details-panel,
+.order-items-panel {
+  padding: 1.75rem;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+}
+
+.order-details-panel h2,
+.order-items-panel h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin-bottom: 1.25rem;
+}
+
+.order-details-panel p {
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin-bottom: 0.25rem;
+}
+
+.order-details-panel p strong {
+  color: var(--text-main);
+}
+
+.order-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.order-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.order-item-row:last-child {
+  border-bottom: none;
+}
+
+.order-item-row h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.order-summary-block {
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.payment-history-block {
+  border-top: 1px solid var(--border-color);
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.payment-history-block h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 0.6rem;
+}
+
+.payment-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  padding: 0.4rem 0;
+}
+
+.skeleton-panel {
+  min-height: 260px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-color);
+  background: linear-gradient(90deg,
+    var(--border-color) 25%,
+    rgba(255, 255, 255, 0.4) 37%,
+    var(--border-color) 63%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite ease-in-out;
+}
+
+/* ----------------------------------------------------
+   ORDER SUCCESS / PAYMENT FAILED CARDS
+---------------------------------------------------- */
+.order-success-page,
+.payment-failed-page {
+  padding: 2rem;
+  max-width: var(--container-max);
+  margin: 0 auto;
+}
+
+.success-card,
+.failed-card {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.success-card h2,
+.failed-card h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.success-icon,
+.failed-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.success-icon {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.failed-icon {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+[data-theme="dark"] .success-icon {
+  background: rgba(22, 163, 74, 0.15);
+}
+
+[data-theme="dark"] .failed-icon {
+  background: rgba(220, 38, 38, 0.15);
+}
+
+.success-details {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  border-radius: var(--radius-lg);
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  margin-top: 0.75rem;
+}
+
+.success-details .detail-row {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.success-details .detail-row strong {
+  color: var(--text-main);
+}
+
+.success-actions,
+.failed-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+/* ----------------------------------------------------
+   EMPTY / ERROR STATE COMPONENTS
+---------------------------------------------------- */
+.empty-state,
+.error-state {
+  padding: 3rem 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.empty-state-icon,
+.error-state-icon {
+  font-size: 2.5rem;
+  color: var(--text-light);
+  margin-bottom: 0.5rem;
+}
+
+.error-state-icon {
+  color: #ef4444;
+}
+
+.empty-state-title,
+.error-state-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.empty-state-desc,
+.error-state-msg {
+  color: var(--text-muted);
+  max-width: 420px;
+}
+
+/* ----------------------------------------------------
+   MOBILE RESPONSIVE REFINEMENTS
+   (Appended: two-column layouts collapse to a single
+   column, navbar/dashboard compact, and grids below
+   560px drop fixed min-widths that caused overflow.)
+---------------------------------------------------- */
+
+/* Tablet: keep desktop sidebar but trim widths to fit 769px-1024px. */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .dashboard-sidebar {
+    width: 240px;
+  }
+
+  .dash-search-container {
+    width: 280px;
+  }
+
+  .dashboard-container {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .hero-container {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-container {
+    grid-template-columns: 1fr;
+  }
+}
 
 @media (max-width: 768px) {
-
-  /* =======================================================
-     GLOBAL MOBILE RESET
-  ======================================================= */
-
-  html,
-  body {
-    width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
-  }
-
-  *,
-  *::before,
-  *::after {
-    box-sizing: border-box;
-  }
-
-  img,
-  video,
-  iframe {
-    max-width: 100%;
-    height: auto;
-  }
-
-  button,
-  input,
-  textarea,
-  select {
-    max-width: 100%;
-  }
-
-
-  /* =======================================================
-     NAVIGATION
-  ======================================================= */
-
-  .desktop-nav,
-  .nav-search-form,
-  .user-meta-desktop {
-    display: none;
-  }
-
-  .mobile-hamburger {
-    display: block;
-  }
-
-  .main-nav,
-  .navbar,
-  .nav-container {
-    width: 100%;
-    max-width: 100%;
-  }
-
-
-  /* =======================================================
-     GENERAL GRIDS
-  ======================================================= */
-
-  .hero-container,
-  .contact-layout,
-  .auth-layout,
-  .checkout-grid,
-  .cart-grid,
-  .farmer-dashboard-grid,
-  .admin-body-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .categories-grid,
-  .produce-grid,
-  .dash-produce-grid,
-  .why-grid,
-  .farmers-grid,
-  .testimonials-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .footer-top-grid {
-    grid-template-columns: 1fr;
-  }
-
-
-  /* =======================================================
-     HERO
-  ======================================================= */
-
-  .hero-container {
-    gap: 1.5rem;
-  }
-
-  .hero-title {
-    font-size: 2.5rem;
-    line-height: 1.1;
-  }
-
-  .hero-search-box {
-    flex-direction: column;
-    padding: 1rem;
-  }
-
-  .search-location-wrap {
-    border-left: none;
-    border-top: 1px solid var(--border-color);
-    padding-left: 0;
-    padding-top: 0.5rem;
-    width: 100%;
-  }
-
-
-  /* =======================================================
-     NEWSLETTER
-  ======================================================= */
-
-  .newsletter-input-group {
-    flex-direction: column;
-  }
-
-
-  /* =======================================================
-     AUTH PAGES — LOGIN / REGISTER
-  ======================================================= */
-
-  .auth-layout {
-    width: 100%;
-    max-width: 100%;
-    padding: 1rem;
+  .navbar-container {
     gap: 1rem;
   }
 
-  .auth-banner {
+  .nav-actions {
+    gap: 0.75rem;
+  }
+
+  .auth-nav-buttons {
     display: none;
   }
 
+  .mobile-drawer {
+    max-height: calc(100vh - var(--nav-height));
+    overflow-y: auto;
+  }
+
+  .hero-trust-indicators {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .dash-stat-chips {
+    flex-wrap: wrap;
+  }
+
+  .dashboard-top-nav {
+    padding: 0 1rem;
+    gap: 1rem;
+  }
+
+  .dash-search-container {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
+
+  .dash-nav-actions {
+    gap: 0.75rem;
+  }
+
+  .role-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .order-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .hero-section {
+    padding: 3rem 0 2rem;
+  }
+
+  .hero-title {
+    font-size: 2.1rem;
+  }
+
+  .hero-main-img {
+    height: 320px;
+  }
+
+  .card-top {
+    left: 12px;
+  }
+
+  .card-bottom {
+    right: 12px;
+  }
+
+  .section-header.flex-between {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .newsletter-title {
+    font-size: 1.7rem;
+  }
+
+  .brand-name {
+    font-size: 1.25rem;
+  }
+
+  .logo-icon-bg {
+    width: 34px;
+    height: 34px;
+  }
+
+  .notif-dropdown-panel {
+    position: fixed;
+    left: 1rem;
+    right: 1rem;
+    top: calc(var(--nav-height) + 0.75rem);
+    width: auto;
+  }
+
+  .dash-user-name {
+    display: none;
+  }
+
+  .footer-top-grid {
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .produce-grid,
+  .categories-grid,
+  .why-grid,
+  .farmers-grid,
+  .testimonials-grid,
+  .dash-produce-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hero-title {
+    font-size: 1.9rem;
+  }
+
+  .section-title {
+    font-size: 1.8rem;
+  }
+
+  .static-page-header .page-title {
+    font-size: 1.7rem;
+  }
+
   .auth-card,
-  .auth-form-card,
-  .auth-content {
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .auth-form {
-    width: 100%;
-  }
-
-  .input-group,
-  .input-wrapper,
-  .input-field {
-    width: 100%;
-    max-width: 100%;
+  .auth-banner {
+    padding: 2rem 1.25rem;
   }
 
   .auth-options {
     flex-wrap: wrap;
     gap: 0.75rem;
+  }
+
+  .role-cards-grid {
+    grid-template-columns: 1fr;
   }
 
   .social-buttons-grid,
@@ -4791,469 +4942,20 @@
     grid-template-columns: 1fr;
   }
 
-
-  /* =======================================================
-     DASHBOARD
-  ======================================================= */
-
-  .dashboard-layout {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    display: flex;
-    flex-direction: row;
-    overflow-x: hidden;
-  }
-
-  /*
-     Keep the dashboard sidebar narrow on mobile.
-     This prevents the sidebar from taking the whole screen.
-  */
-
-  .dashboard-sidebar {
-    width: 64px;
-    min-width: 64px;
-    max-width: 64px;
-    flex: 0 0 64px;
-    height: 100vh;
-    position: sticky;
-    top: 0;
-    padding: 1rem 0.5rem;
-  }
-
-  .dashboard-sidebar.collapsed {
-    width: 64px;
-  }
-
-  .dashboard-main-content {
-    flex: 1 1 auto;
-    width: calc(100% - 64px);
-    min-width: 0;
-    max-width: calc(100% - 64px);
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-  }
-
-
-  /* ---------- Sidebar ---------- */
-
-  .sidebar-header {
-    flex-direction: column;
-    justify-content: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-  }
-
-  .brand-logo {
-    justify-content: center;
-    width: 100%;
-  }
-
-  .brand-name,
-  .sidebar-toggle-btn,
-  .sidebar-user-pill,
-  .sidebar-farmer-pill {
-    display: none;
-  }
-
-  .sidebar-nav {
-    width: 100%;
-  }
-
-  .sidebar-nav-item {
-    justify-content: center;
-    gap: 0;
-    padding: 0.75rem 0;
-  }
-
-  .nav-item-icon {
-    font-size: 1.4rem;
-  }
-
-  .nav-item-label,
-  .nav-item-badge {
-    display: none;
-  }
-
-  .sidebar-footer {
-    padding-top: 1rem;
-  }
-
-  .sidebar-logout-btn {
-    justify-content: center;
-    gap: 0;
-    padding: 0.75rem 0;
-  }
-
-  .sidebar-logout-btn span {
-    display: none;
-  }
-
-  .logout-icon {
-    font-size: 1.3rem;
-  }
-
-
-  /* ---------- Dashboard Top Navigation ---------- */
-
-  .dashboard-top-nav {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    box-sizing: border-box;
-    padding: 0 0.75rem;
-  }
-
-  .dash-search-container {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    flex: 1 1 100%;
-  }
-
-
-  /* ---------- Dashboard Container ---------- */
-
-  .dashboard-container {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    margin: 0;
-    padding: 0.75rem;
-    box-sizing: border-box;
-  }
-
-  .dash-body-grid {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    grid-template-columns: 1fr;
-    box-sizing: border-box;
-  }
-
-  .dash-feed-column,
-  .dash-sidebar-column {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    box-sizing: border-box;
-  }
-
-
-  /* ---------- Welcome Banner ---------- */
-
-  .dash-welcome-banner {
-    width: 100%;
-    max-width: 100%;
-    padding: 1.25rem;
-    margin-bottom: 1.25rem;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-    box-sizing: border-box;
-  }
-
-  .dash-welcome-banner h1 {
-    font-size: 2rem;
-    line-height: 1.1;
-    margin-bottom: 0.75rem;
-  }
-
-  .dash-welcome-banner p {
-    font-size: 0.9rem;
-    line-height: 1.45;
-  }
-
-  .dash-welcome-banner .dash-stat-chips {
-    width: 100%;
-    max-width: 100%;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-  }
-
-  .dash-welcome-banner .stat-chip {
-    flex: 1 1 120px;
-    min-width: 0;
-  }
-
-
-  /* ---------- Dashboard Produce Cards ---------- */
-
-  .dash-produce-grid {
-    width: 100%;
-    max-width: 100%;
-    grid-template-columns: 1fr;
-  }
-
-  .dash-produce-card-wrap,
-  .produce-card {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-  }
-
-
-  /* =======================================================
-     ADMIN DASHBOARD
-  ======================================================= */
-
-  .admin-dashboard-layout {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .admin-body-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-chart-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-sidebar {
-    width: 100%;
-    position: static;
-    min-height: auto;
-  }
-
-
-  /* =======================================================
-     FARMER DASHBOARD
-  ======================================================= */
-
-  .farmer-dashboard-overview {
-    grid-template-columns: 1fr;
-  }
-
-  .farmer-dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .sales-chart-legend {
-    grid-template-columns: 1fr;
-  }
-
-
-  /* =======================================================
-     CHECKOUT
-  ======================================================= */
-
-  .checkout-page {
-    width: 100%;
-    max-width: 100%;
-    padding: 1.25rem;
-    box-sizing: border-box;
-  }
-
-  .checkout-hero {
-    padding: 1.5rem;
-  }
-
-  .checkout-hero h1 {
-    font-size: 1.6rem;
-  }
-
-  .checkout-form-panel,
-  .checkout-summary-panel {
-    width: 100%;
-    max-width: 100%;
-    padding: 1.25rem;
-    box-sizing: border-box;
-  }
-
-  .customer-info-grid,
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .checkout-buttons .btn-row {
-    flex-direction: column;
-  }
-
-  .checkout-summary-panel {
-    position: static;
-  }
-
-
-  /* =======================================================
-     CART
-  ======================================================= */
-
-  .cart-page {
-    width: 100%;
-    max-width: 100%;
-    padding: 1.25rem;
-    box-sizing: border-box;
-  }
-
-  .cart-page-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .cart-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .cart-items-panel,
-  .cart-summary-panel {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-  }
-
-  .cart-item-row {
-    grid-template-columns: 1fr;
-  }
-
-  .cart-item-actions {
-    align-items: flex-start;
-  }
-
-
-  /* =======================================================
-     TABLES
-  ======================================================= */
-
-  .table-responsive,
-  .product-table-wrapper {
-    width: 100%;
-    max-width: 100%;
-    overflow-x: auto;
-  }
-
-  .orders-table {
-    min-width: 600px;
-  }
-
-
-  /* =======================================================
-     FOOTER
-  ======================================================= */
-
-  .footer-bottom {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
-  }
-}
-
-
-/* =========================================================
-   SMALL MOBILE — 480px and below
-========================================================= */
-
-@media (max-width: 480px) {
-
-  /* ---------- Global ---------- */
-
-  body {
-    font-size: 14px;
-  }
-
-
-  /* ---------- Dashboard ---------- */
-
-  .dashboard-sidebar {
-    width: 56px;
-    min-width: 56px;
-    max-width: 56px;
-    flex-basis: 56px;
-  }
-
-  .dashboard-main-content {
-    width: calc(100% - 56px);
-    max-width: calc(100% - 56px);
-  }
-
-  .dashboard-container {
-    padding: 0.6rem;
-  }
-
-
-  /* ---------- Welcome Banner ---------- */
-
-  .dash-welcome-banner {
-    padding: 1rem;
-  }
-
-  .dash-welcome-banner h1 {
+  .dash-heading {
     font-size: 1.7rem;
   }
 
-  .dash-welcome-banner p {
-    font-size: 0.82rem;
-  }
-
-  .dash-welcome-banner .stat-chip {
-    flex: 1 1 100%;
-  }
-
-
-  /* ---------- Hero ---------- */
-
-  .hero-title {
-    font-size: 2rem;
-  }
-
-
-  /* ---------- Stats ---------- */
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-
-  /* ---------- Footer ---------- */
-
-  .footer-top-grid {
-    grid-template-columns: 1fr;
-  }
-
-
-  /* ---------- Static Cards ---------- */
-
-  .static-card {
+  .product-details-page {
     padding: 1.25rem;
   }
 
-
-  /* ---------- Checkout ---------- */
-
-  .checkout-page,
-  .cart-page {
-    padding: 0.75rem;
+  .cart-item-image {
+    width: 96px;
+    height: 96px;
   }
 
-  .checkout-hero,
-  .checkout-form-panel,
-  .checkout-summary-panel {
-    padding: 1rem;
-  }
-
-  .checkout-hero h1 {
-    font-size: 1.4rem;
-  }
-
-
-  /* ---------- Forms ---------- */
-
-  .auth-layout {
-    padding: 0.75rem;
-  }
-
-  .auth-card,
-  .auth-form-card {
-    padding: 1rem;
-  }
-
-  .auth-options {
-    flex-direction: column;
-    align-items: flex-start;
+  .gallery-main-image {
+    height: 300px;
   }
 }
