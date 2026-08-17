@@ -30,7 +30,7 @@ export const BuyerDashboardPage = () => {
   const { user } = useAuth();
   const { addToCart } = useCart();
 
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [wishlist, setWishlist] = useState([]);
@@ -91,6 +91,12 @@ export const BuyerDashboardPage = () => {
   useEffect(() => {
     fetchData();
   }, [searchQuery, activeCategory, priceRange.min, priceRange.max, currentView]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth > 768) {
+      setSidebarCollapsed(false);
+    }
+  }, []);
 
   const toggleWishlist = (productId) => {
     setWishlist((prev) => {
@@ -653,9 +659,11 @@ export const BuyerDashboardPage = () => {
 
       <div className="dashboard-main-content">
         <DashboardHeader
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-        />
+  searchQuery={searchQuery}
+  onSearchChange={setSearchQuery}
+  onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+  sidebarCollapsed={sidebarCollapsed}
+/>
 
         <div className="dashboard-container">
           <div className="dash-welcome-banner glass-panel">

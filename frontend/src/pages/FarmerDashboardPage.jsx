@@ -33,7 +33,7 @@ import {
 export const FarmerDashboardPage = () => {
   const location = useLocation();
   const { user } = useAuth();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [dashboard, setDashboard] = useState(null);
   const [farmerProducts, setFarmerProducts] = useState([]);
@@ -169,6 +169,12 @@ export const FarmerDashboardPage = () => {
     };
 
     loadData();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth > 768) {
+      setSidebarCollapsed(false);
+    }
   }, []);
 
   const openAddProduce = () => {
@@ -310,6 +316,8 @@ export const FarmerDashboardPage = () => {
           <DashboardHeader
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            onToggleSidebar={() => setSidebarCollapsed((prev) => !prev)}
+            sidebarCollapsed={sidebarCollapsed}
           />
           <div className="dashboard-container">
             <div className="dash-welcome-banner glass-panel">
@@ -343,6 +351,8 @@ export const FarmerDashboardPage = () => {
           <DashboardHeader
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            onToggleSidebar={() => setSidebarCollapsed((prev) => !prev)}
+            sidebarCollapsed={sidebarCollapsed}
           />
           <div className="dashboard-container">
             <div className="dash-welcome-banner glass-panel">
@@ -380,6 +390,8 @@ export const FarmerDashboardPage = () => {
           <DashboardHeader
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            onToggleSidebar={() => setSidebarCollapsed((prev) => !prev)}
+            sidebarCollapsed={sidebarCollapsed}
           />
 
           <div className="dashboard-container">

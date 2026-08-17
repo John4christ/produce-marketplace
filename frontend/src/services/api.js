@@ -2,8 +2,9 @@ import axios from 'axios';
 
 const baseURL =
   import.meta.env.VITE_API_BASE_URL ||
-  'https://produce-marketplace-production.up.railway.app/api';
+  'http://192.168.43.94:8000/api';
 
+  
 const api = axios.create({
   baseURL,
   timeout: 30000,

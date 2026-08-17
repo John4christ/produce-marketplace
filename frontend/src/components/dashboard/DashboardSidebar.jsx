@@ -32,7 +32,11 @@ export const DashboardSidebar = ({ isCollapsed, onToggleCollapse, wishlistCount 
   ];
 
   return (
-    <aside className={`dashboard-sidebar glass-panel ${isCollapsed ? 'collapsed' : ''}`}>
+    <>
+      {!isCollapsed && (
+        <div className="sidebar-backdrop" onClick={onToggleCollapse} aria-hidden="true" />
+      )}
+      <aside className={`dashboard-sidebar glass-panel ${isCollapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
         <Link to="/" className="brand-logo">
           <div className="logo-icon-bg">
@@ -100,5 +104,6 @@ export const DashboardSidebar = ({ isCollapsed, onToggleCollapse, wishlistCount 
         </button>
       </div>
     </aside>
+    </>
   );
 };

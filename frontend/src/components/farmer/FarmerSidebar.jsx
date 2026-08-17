@@ -30,7 +30,11 @@ export const FarmerSidebar = ({ isCollapsed, onToggleCollapse, onOpenAddModal, c
   ];
 
   return (
-    <aside className={`dashboard-sidebar farmer-sidebar glass-panel ${isCollapsed ? 'collapsed' : ''}`}>
+    <>
+      {!isCollapsed && (
+        <div className="sidebar-backdrop" onClick={onToggleCollapse} aria-hidden="true" />
+      )}
+      <aside className={`dashboard-sidebar farmer-sidebar glass-panel ${isCollapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
         <Link to="/" className="brand-logo">
           <div className="logo-icon-bg amber-gradient-bg">
@@ -109,5 +113,6 @@ export const FarmerSidebar = ({ isCollapsed, onToggleCollapse, onOpenAddModal, c
         </button>
       </div>
     </aside>
+    </>
   );
 };

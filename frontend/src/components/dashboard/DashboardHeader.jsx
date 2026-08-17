@@ -9,7 +9,8 @@ import {
   FiLogOut,
   FiSettings,
   FiCheck,
-  FiX
+  FiX,
+  FiMenu
 } from 'react-icons/fi';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
@@ -17,7 +18,12 @@ import { useCart } from '../../context/CartContext';
 import { Badge } from '../common/Badge';
 import Avatar from '../common/Avatar';
 
-export const DashboardHeader = ({ onSearchChange, searchQuery = '' }) => {
+export const DashboardHeader = ({
+  onSearchChange,
+  searchQuery = '',
+  onToggleSidebar,
+  sidebarCollapsed
+}) => {
   const { isDark, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const { cartCount } = useCart();
@@ -59,6 +65,13 @@ export const DashboardHeader = ({ onSearchChange, searchQuery = '' }) => {
 
   return (
     <header className="dashboard-top-nav glass-panel">
+      <button
+  className="dashboard-menu-btn"
+  onClick={onToggleSidebar}
+  aria-label={sidebarCollapsed ? 'Open sidebar menu' : 'Close sidebar menu'}
+>
+  {sidebarCollapsed ? <FiMenu /> : <FiX />}
+</button>
       <div className="dash-search-container">
         <FiSearch className="dash-search-icon" />
         <input
@@ -154,8 +167,6 @@ export const DashboardHeader = ({ onSearchChange, searchQuery = '' }) => {
                     {userRole.toUpperCase()} ACCOUNT
                   </Badge>
                 </div>
-                <div className="dropdown-divider" />
-  
                 <div className="dropdown-divider" />
                 <button className="dropdown-item red-text" onClick={logout}>
                   <FiLogOut /> <span>Sign Out</span>
