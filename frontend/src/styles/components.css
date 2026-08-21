@@ -5317,3 +5317,67 @@
     left: 62px;
   }
 }
+/* =========================================================
+   MOBILE HORIZONTAL OVERFLOW FIX
+   ========================================================= */
+
+@media (max-width: 768px) {
+  html,
+  body,
+  #root {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden !important;
+  }
+
+  * {
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+
+  .dashboard-layout,
+  .auth-page,
+  .auth-container,
+  .dashboard-main-content,
+  .main-content,
+  .page-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Prevent cards/containers from forcing the page wider */
+  .auth-card,
+  .auth-banner,
+  .glass-panel,
+  .card,
+  .container {
+    max-width: calc(100vw - 24px) !important;
+  }
+
+  /* Images/media must never exceed the phone */
+  img,
+  video,
+  iframe {
+    max-width: 100% !important;
+    height: auto;
+  }
+
+  /* Prevent long text/URLs from creating overflow */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  span,
+  a {
+    overflow-wrap: break-word;
+  }
+}

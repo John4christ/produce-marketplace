@@ -65,7 +65,8 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])
     ->prefix('admin')
     ->group(function () {
 
-        Route::get('/dashboard', [AdminController::class, 'dashboard']);
+        Route::get('/dashboard', [AdminController::class, 'dashboard'])
+            ->middleware(CheckRole::class . ':admin');
 
         Route::get('/users', [AdminController::class, 'users'])
             ->middleware(CheckRole::class . ':admin');
